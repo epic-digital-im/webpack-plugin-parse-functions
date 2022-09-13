@@ -31,7 +31,6 @@ export type ActionItem = P.Object<ActionItemAttributes>;
 
 
 const service = (Parse: ParseType) => {
-
   Parse.Cloud.beforeSave<ActionItem>('ActionItem', async (request) => {
     await hook(request);
   });

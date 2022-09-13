@@ -1,12 +1,8 @@
-import { Compiler, WebpackPluginInstance, Dependency, Chunk } from 'webpack';
-import InjectPlugin from 'webpack-inject-plugin';
+import { Compiler, WebpackPluginInstance, NormalModuleReplacementPlugin, Compilation } from 'webpack';
 import glob from 'glob';
 import path from 'path';
 import fs from 'fs';
 
-// interface ParseFunctionsPluginType {
-//   apply
-// }
 
 interface ParseFunctionServiceHooks {
   afterSave: string[];
@@ -87,74 +83,78 @@ const PARSE_HOOK_NAMES = [
   'datetime',
 ];
 
-const PARSE_PLUGIN_NAME = 'PARSE FUNCTIONS PLUGIN';
-
 interface ParseFunctionPluginOptions {
   entry?: string;
 }
 
 export class ParseFunctionsPlugin implements WebpackPluginInstance {
   options: ParseFunctionPluginOptions;
+  basePath?: string;
+  buildPath?: string;
+  schemaPaths?: string[];
+  indexFilePath?: string;
 
   constructor(opts?: Partial<ParseFunctionPluginOptions>) {
     this.options = opts || {};
   }
 
   async apply(compiler: Compiler) {
-    const entry = (compiler.options.entry as any).main.import[0];
-    const basePath = path.resolve(`${compiler.context}/src/functions`);
-    const schemaPaths = glob.sync(`${basePath}/**/schema.json`);
-    const buildPath = path.resolve(basePath, '.build');
-    const indexFilePath = path.resolve(buildPath, `index.ts`);
+    this.basePath = path.resolve(`${compiler.context}/src/functions`);
+    this.schemaPaths = glob.sync(`${this.basePath}/**/schema.json`);
+    this.buildPath = path.resolve(this.basePath, '.build');
+    this.indexFilePath = path.resolve(this.buildPath, `index.ts`);
+    
+    compiler.hooks.compilation.tap(this.constructor.name, this.startBuild);
 
-    new InjectPlugin(() => `import initializeFunctions from '${indexFilePath}';\n\ninitializeFunctions(Parse);`).apply(compiler);
+    // Look for import of modules that begins with `@@function` and replace with build folder
+    new NormalModuleReplacementPlugin(/^@@functions(.*)/, (resource) => {
+      resource.request = resource.request.replace('@@functions', this.buildPath);
+    }).apply(compiler);
+  }
 
-    if (typeof entry !== 'string' && this.options.entry == null) {
-      throw new Error(`[${PARSE_PLUGIN_NAME}]: Because your Webpack config file (webpack.config.js) includes a non-string entry, you'll need to provide an 'entry' option to ensure functions are only inserted in one file`);
+  private startBuild(compilation: Compilation) {
+    // clean build folder
+    try {
+      fs.rmSync(this.buildPath!, { recursive: true });
+    } catch (err) {
+      console.warn('[PARSE FUNCTIONS PLUGIN]', 'No build folder found; creating one now');
     }
 
-    compiler.hooks.compilation.tap(this.constructor.name, async (compilation, params) => {
-      // clean build folder
-      try {
-        fs.rmSync(buildPath, { recursive: true });
-      } catch (err) {
-        console.warn('[PARSE FUNCTIONS PLUGIN]', 'No build folder found; creating one now');
-      }
+    fs.mkdirSync(this.buildPath!);
 
-      fs.mkdirSync(buildPath);
-
-      const services = schemaPaths.reduce((memo, schemaPath) => {
-        const p = schemaPath.split(path.sep);
-        const serviceDirName = p[p.length - 2];
-        const servicePath = path.join(basePath, serviceDirName);
-        const schema: ParseFunctionServiceSchema = JSON.parse(fs.readFileSync(schemaPath, { encoding: 'utf-8' }));
-        const triggers = glob.sync(`${servicePath}/triggers/**/*`);
-        const functions = glob.sync(`${servicePath}/functions/**/*`);
-        const hooks = PARSE_HOOK_NAMES.reduce((hMemo, hook) => {
-          hMemo[hook as keyof ParseFunctionServiceHooks] = glob.sync(`${servicePath}/${hook}/*`)
-          return hMemo;
-        }, {} as ParseFunctionServiceHooks);
-        
-        memo[serviceDirName] = {
-          name: serviceDirName,
-          className: schema.className,
-          schema,
-          schemaPath,
-          functions,
-          triggers,
-          hooks,
-        };
-        return memo;
-      }, {} as ParseServiceMap);
+    const services = this.schemaPaths!.reduce((memo, schemaPath) => {
+      const p = schemaPath.split(path.sep);
+      const serviceDirName = p[p.length - 2];
+      const servicePath = path.join(this.basePath!, serviceDirName);
+      const schema: ParseFunctionServiceSchema = JSON.parse(fs.readFileSync(schemaPath, { encoding: 'utf-8' }));
+      const triggers = glob.sync(`${servicePath}/triggers/**/*`);
+      const functions = glob.sync(`${servicePath}/functions/**/*`);
+      const hooks = PARSE_HOOK_NAMES.reduce((hMemo, hook) => {
+        hMemo[hook as keyof ParseFunctionServiceHooks] = glob.sync(`${servicePath}/${hook}/*`)
+        return hMemo;
+      }, {} as ParseFunctionServiceHooks);
       
-      Object.entries(services).forEach(([serviceName, service]) => {
-        fs.writeFileSync(path.resolve(buildPath, `${serviceName}.ts`), this.makeServiceFile(service));
-      });
-
-      fs.writeFileSync(indexFilePath, this.makeServiceIndexFile(services));
-
-      compilation.fileDependencies.add(indexFilePath);
+      memo[serviceDirName] = {
+        name: serviceDirName,
+        className: schema.className,
+        schema,
+        schemaPath,
+        functions,
+        triggers,
+        hooks,
+      };
+      return memo;
+    }, {} as ParseServiceMap);
+    
+    Object.entries(services).forEach(([serviceName, service]) => {
+      const servicePath = path.resolve(this.buildPath!, `${serviceName}.ts`);
+      compilation.fileDependencies.add(this.indexFilePath!);
+      fs.writeFileSync(servicePath, this.makeServiceFile(service));
     });
+
+    fs.writeFileSync(this.indexFilePath!, this.makeServiceIndexFile(services));
+
+    compilation.fileDependencies.add(this.indexFilePath!);
   }
 
   private makeServiceIndexFile(services: ParseServiceMap) {
@@ -189,8 +189,7 @@ export default initialize;
     const hookFunctions = Object.entries(service.hooks)
       .reduce((memo, [hookName, hookPaths]: [string, string[]]) => {
         if (hookPaths.length === 0) return memo;
-        return memo + `
-  Parse.Cloud.${hookName}<${service.className}>('${service.className}', async (request) => {
+        return memo + `  Parse.Cloud.${hookName}<${service.className}>('${service.className}', async (request) => {
     ${hookPaths.map((hookPath) => {
       const funcName = getSanitizedFunctionName(hookPath);
       return `await ${funcName}(request);`
@@ -243,11 +242,6 @@ export type ${service.schema.className} = P.Object<${service.schema.className}At
 
 function createImportFromFilename(filePath: string) {
   return `import ${getSanitizedFunctionName(filePath)} from '${filePath.replace(/\.ts$/, '')}';`
-}
-
-function getFilename(filePath: string): string {
-  const ext = path.extname(filePath);
-  return path.basename(filePath, ext);
 }
 
 function getSanitizedFunctionName(filePath: string): string {

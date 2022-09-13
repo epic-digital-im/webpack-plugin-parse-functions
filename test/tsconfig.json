@@ -4,7 +4,11 @@
     "noImplicitAny": true,
     "module": "es6",
     "target": "es5",
-    "allowJs": true
+    "allowJs": true,
+    "paths": {
+      "@@functions": ["./src/functions/.build/index.ts"],
+      "@@functions/*": ["./src/functions/.build/*"]
+    }
   },
   "files": ["src/index.ts"]
 }
