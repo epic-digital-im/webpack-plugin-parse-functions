@@ -96,6 +96,14 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
   schemaPaths?: string[];
   indexFilePath?: string;
 
+  get templateHelpers() {
+    return {
+      mapSchemaTypeToTSType,
+      createImportFromFilename,
+      getSanitizedFunctionName,
+    };
+  }
+
   constructor(opts?: Partial<ParseFunctionPluginOptions>) {
     this.options = opts || {};
   }
@@ -169,34 +177,19 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
   }
 
   private makeHelpersFile(services: ParseServiceMap) {
-    const helpers = {
-      mapSchemaTypeToTSType,
-      createImportFromFilename,
-      getSanitizedFunctionName,
-    };
-    const helpersFileString = eta.render(helpersTemplateString, { services, helpers }) as string;
+    const helpersFileString = eta.render(helpersTemplateString, { services, helpers: this.templateHelpers }) as string;
     const f = prettier.format(helpersFileString, { parser: 'typescript', printWidth: 112 });
     return f;
   }
 
   private makeServiceIndexFile(services: ParseServiceMap) {
-    const helpers = {
-      mapSchemaTypeToTSType,
-      createImportFromFilename,
-      getSanitizedFunctionName,
-    };
-    const indexFileString = eta.render(indexTemplateString, { services, helpers }) as string;
+    const indexFileString = eta.render(indexTemplateString, { services, helpers: this.templateHelpers }) as string;
     const f = prettier.format(indexFileString, { parser: 'typescript', printWidth: 112 });
     return f;
   }
 
   private makeServiceFile(service: ParseFunctionService): string {
-    const helpers = {
-      mapSchemaTypeToTSType,
-      createImportFromFilename,
-      getSanitizedFunctionName,
-    };
-    const serviceFileString = eta.render(serviceTemplateString, { service, helpers }) as string;
+    const serviceFileString = eta.render(serviceTemplateString, { service, helpers: this.templateHelpers }) as string;
     const f = prettier.format(serviceFileString, { parser: 'typescript', printWidth: 112 });
     return f;
   }
