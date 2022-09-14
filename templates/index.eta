@@ -38,7 +38,7 @@ export type SchemaMap = {
   [prop in ClassNames]: ParseFunctionServiceSchema
 }
 
-export const schema: SchemaMap = {
+export const Schemas: SchemaMap = {
   <% Object.values(it.services).forEach(service => { %>
     <%~ service.className %>: <%~ JSON.stringify(service.schema, null, 2) %>
   <% }) %>

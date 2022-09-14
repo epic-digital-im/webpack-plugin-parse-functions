@@ -30,7 +30,7 @@ export type SchemaMap = {
   [prop in ClassNames]: ParseFunctionServiceSchema;
 };
 
-export const schema: SchemaMap = {
+export const Schemas: SchemaMap = {
   ActionItem: {
     className: "ActionItem",
     fields: {
