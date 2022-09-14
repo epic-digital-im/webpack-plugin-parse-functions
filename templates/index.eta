@@ -1,0 +1,49 @@
+import type P from 'parse';
+<% Object.keys(it.services).forEach((serviceName) => { %>
+  import <%~ serviceName %> from './<%~ serviceName %>';
+<% }) %>
+
+
+type ParseType = typeof P;
+
+
+interface ParseFunctionServiceSchema {
+  className: string;
+  fields: {
+    [key: string]: ParseFunctionServiceSchemaField;
+  };
+  [key: string]: any;
+}
+
+type ParseFunctionServiceSchemaField = {
+  type: string;
+  targetClass?: string;
+  required?: boolean;
+  defaultValue?: any;
+}
+
+const initialize = (Parse: ParseType) => {
+  <% Object.keys(it.services).forEach((serviceName) => { %>
+  <%~ serviceName %>(Parse);
+  <% }) %>
+}
+
+export enum ClassNames {
+  <% Object.values(it.services).map(service => service.className).forEach(className => { %>
+    <%~ className %> = '<%~ className %>',
+  <% }) %>
+}
+
+export type SchemaMap = {
+  [prop in ClassNames]: ParseFunctionServiceSchema
+}
+
+export const schema: SchemaMap = {
+  <% Object.values(it.services).forEach(service => { %>
+    <%~ service.className %>: <%~ JSON.stringify(service.schema, null, 2) %>
+  <% }) %>
+};
+
+
+
+export default initialize;

@@ -1,23 +1,41 @@
 import { Compiler, WebpackPluginInstance, NormalModuleReplacementPlugin, Compilation } from 'webpack';
+import prettier from 'prettier';
+import * as eta from 'eta';
 import glob from 'glob';
 import path from 'path';
 import fs from 'fs';
 
 
-interface ParseFunctionServiceHooks {
-  afterSave: string[];
-  afterDelete: string[];
-  afterCreate: string[];
-  afterUpdate: string[];
-  beforeSave: string[];
-  beforeDelete: string[];
-  beforeCreate: string[];
-  beforeUpdate: string[];
-  hourly: string[];
-  daily: string[];
-  weekly: string[];
-  monthly: string[];
-  datetime: string[];
+const serviceTemplatePath = require.resolve(path.resolve(__dirname, '../templates/service.eta'));
+const serviceTemplateString = fs.readFileSync(serviceTemplatePath, { encoding: 'utf-8' });
+const indexTemplatePath = require.resolve(path.resolve(__dirname, '../templates/index.eta'));
+const indexTemplateString = fs.readFileSync(indexTemplatePath, { encoding: 'utf-8' });
+const helpersTemplatePath = require.resolve(path.resolve(__dirname, '../templates/helpers.eta'));
+const helpersTemplateString = fs.readFileSync(helpersTemplatePath, { encoding: 'utf-8' });
+
+interface ParseFunctionServiceHook {
+  hooks: string[];
+  config?: string;
+}
+
+enum ServiceHooks {
+  afterSave = 'afterSave',
+  afterDelete = 'afterDelete',
+  afterCreate = 'afterCreate',
+  afterUpdate = 'afterUpdate',
+  beforeSave = 'beforeSave',
+  beforeDelete = 'beforeDelete',
+  beforeCreate = 'beforeCreate',
+  beforeUpdate = 'beforeUpdate',
+  hourly = 'hourly',
+  daily = 'daily',
+  weekly = 'weekly',
+  monthly = 'monthly',
+  datetime = 'datetime',
+}
+
+type ParseFunctionServiceHooks = {
+  [prop in ServiceHooks]: ParseFunctionServiceHook;
 }
 
 enum ParseServiceSchemaFieldType {
@@ -67,22 +85,6 @@ interface ParseServiceMap {
   [key: string]: ParseFunctionService;
 }
 
-const PARSE_HOOK_NAMES = [
-  'afterSave',
-  'afterDelete',
-  'afterCreate',
-  'afterUpdate',
-  'beforeSave',
-  'beforeDelete',
-  'beforeCreate',
-  'beforeUpdate',
-  'hourly',
-  'daily',
-  'weekly',
-  'monthly',
-  'datetime',
-];
-
 interface ParseFunctionPluginOptions {
   entry?: string;
 }
@@ -107,12 +109,12 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
     compiler.hooks.compilation.tap(this.constructor.name, this.startBuild);
 
     // Look for import of modules that begins with `@@function` and replace with build folder
-    new NormalModuleReplacementPlugin(/^@@functions(.*)/, (resource) => {
+    new NormalModuleReplacementPlugin(/^@@functions(.*)/, (resource: any) => {
       resource.request = resource.request.replace('@@functions', this.buildPath);
     }).apply(compiler);
   }
 
-  private startBuild(compilation: Compilation) {
+  private startBuild = (compilation: Compilation) => {
     // clean build folder
     try {
       fs.rmSync(this.buildPath!, { recursive: true });
@@ -127,10 +129,18 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
       const serviceDirName = p[p.length - 2];
       const servicePath = path.join(this.basePath!, serviceDirName);
       const schema: ParseFunctionServiceSchema = JSON.parse(fs.readFileSync(schemaPath, { encoding: 'utf-8' }));
-      const triggers = glob.sync(`${servicePath}/triggers/**/*`);
+      const triggers = glob.sync(`${servicePath}/triggers/*`);
       const functions = glob.sync(`${servicePath}/functions/**/*`);
-      const hooks = PARSE_HOOK_NAMES.reduce((hMemo, hook) => {
-        hMemo[hook as keyof ParseFunctionServiceHooks] = glob.sync(`${servicePath}/${hook}/*`)
+      const hooks = Object.values(ServiceHooks).reduce((hMemo, hook) => {
+        const hookPaths = glob.sync(`${servicePath}/${hook}/*`);
+        const hookConfig = hookPaths.find((path) => /\/config\.t|js$/.test(path));
+        if (hookConfig) {
+          hookPaths.splice(hookPaths.indexOf(hookConfig), 1);
+        }
+        hMemo[hook] = {
+          hooks: hookPaths,
+          config: hookConfig,
+        };
         return hMemo;
       }, {} as ParseFunctionServiceHooks);
       
@@ -152,104 +162,57 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
       fs.writeFileSync(servicePath, this.makeServiceFile(service));
     });
 
+    fs.writeFileSync(path.resolve(`${this.buildPath}`, 'helpers.ts'), this.makeHelpersFile(services));
     fs.writeFileSync(this.indexFilePath!, this.makeServiceIndexFile(services));
 
     compilation.fileDependencies.add(this.indexFilePath!);
   }
 
+  private makeHelpersFile(services: ParseServiceMap) {
+    const helpers = {
+      mapSchemaTypeToTSType,
+      createImportFromFilename,
+      getSanitizedFunctionName,
+    };
+    const helpersFileString = eta.render(helpersTemplateString, { services, helpers }) as string;
+    const f = prettier.format(helpersFileString, { parser: 'typescript', printWidth: 112 });
+    return f;
+  }
+
   private makeServiceIndexFile(services: ParseServiceMap) {
-    const serviceImports = Object.keys(services)
-      .map((serviceName) => `import ${serviceName} from './${serviceName}';`)
-      .join('\n');
-    const serviceInits = Object.keys(services)
-      .map((serviceName) => `  ${serviceName}(Parse);`)
-      .join('\n');
-    return `
-import type P from 'parse';
-${serviceImports}
-
-type ParseType = typeof P;
-
-const initialize = (Parse: ParseType) => {
-${serviceInits}
-}
-
-export default initialize;
-`
+    const helpers = {
+      mapSchemaTypeToTSType,
+      createImportFromFilename,
+      getSanitizedFunctionName,
+    };
+    const indexFileString = eta.render(indexTemplateString, { services, helpers }) as string;
+    const f = prettier.format(indexFileString, { parser: 'typescript', printWidth: 112 });
+    return f;
   }
 
   private makeServiceFile(service: ParseFunctionService): string {
-    const triggerImports = service.triggers.map(createImportFromFilename).join('\n');
-    const functionImports = service.functions.map(createImportFromFilename).join('\n');
-    const hookImports = Object.entries(service.hooks)
-      .reduce((memo, [hookName, hookPaths]: [string, string[]]) => {
-        return memo + hookPaths.map(createImportFromFilename).join('\n');
-      }, '');
-
-    const hookFunctions = Object.entries(service.hooks)
-      .reduce((memo, [hookName, hookPaths]: [string, string[]]) => {
-        if (hookPaths.length === 0) return memo;
-        return memo + `  Parse.Cloud.${hookName}<${service.className}>('${service.className}', async (request) => {
-    ${hookPaths.map((hookPath) => {
-      const funcName = getSanitizedFunctionName(hookPath);
-      return `await ${funcName}(request);`
-    }).join('\n  ')}
-  });
-  `;
-      }, '');
-    
-    const functions = service.functions.map((functionPath) => {
-      const functionName = getSanitizedFunctionName(functionPath);
-      return `  Parse.Cloud.define('${functionName}', ${functionName});`;
-    })
-    .join('\n');
-    
-    return `// auto-generated file for ${service.name}
-import P from 'parse';
-${hookImports}
-${triggerImports}
-${functionImports}
-
-type ParseType = typeof P;
-
-${this.makeServiceTypeDefinition(service)}
-
-const service = (Parse: ParseType) => {
-${hookFunctions}
-${functions}
-};
-
-export default service;
-`
+    const helpers = {
+      mapSchemaTypeToTSType,
+      createImportFromFilename,
+      getSanitizedFunctionName,
+    };
+    const serviceFileString = eta.render(serviceTemplateString, { service, helpers }) as string;
+    const f = prettier.format(serviceFileString, { parser: 'typescript', printWidth: 112 });
+    return f;
   }
-
-  private makeServiceTypeDefinition(service: ParseFunctionService): string {
-    const fields = Object.entries(service.schema.fields).map(([fieldName, opts]) => {
-      return `  ${fieldName}${opts.required ? '' : '?'}: ${mapSchemaTypeToTSType(opts)}`
-    }).join('\n');
-    return `
-export interface ${service.schema.className}Attributes {
-${fields}
-}
-
-export type ${service.schema.className} = P.Object<${service.schema.className}Attributes>;
-`
-  }
-
-  // private makeHookDefinition()
 }
 
 
-function createImportFromFilename(filePath: string) {
-  return `import ${getSanitizedFunctionName(filePath)} from '${filePath.replace(/\.ts$/, '')}';`
+function createImportFromFilename(filePath: string, prefix: string = '') {
+  return `import ${getSanitizedFunctionName(filePath, prefix)} from '${filePath.replace(/\.ts$/, '')}';`
 }
 
-function getSanitizedFunctionName(filePath: string): string {
+function getSanitizedFunctionName(filePath: string, prefix: string = ''): string {
   const ext = path.extname(filePath);
-  const fileName = path.basename(filePath, ext);
-  return fileName
+  let fileName = path.basename(filePath, ext)
     .replace(/^(\d_)|\d\./g, '')
     .replace(/[^a-zA-Z]/g, '_');
+  return prefix ? `${prefix}${fileName}` : fileName;
 }
 
 function mapSchemaTypeToTSType(schemaField: ParseFunctionServiceSchemaField): string {

@@ -9,12 +9,17 @@
   },
   "devDependencies": {
     "@types/glob": "^8.0.0",
+    "@types/parse": "^2.18.18",
+    "@types/prettier": "^2.7.0",
     "@types/webpack": "^5.28.0",
     "typescript": "^4.6.4",
     "webpack": "^5.74.0"
   },
   "dependencies": {
+    "eta": "^1.12.3",
     "glob": "^8.0.3",
+    "parse": "^3.4.4",
+    "prettier": "^2.7.1",
     "webpack-inject-plugin": "^1.5.5"
   }
 }

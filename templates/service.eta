@@ -1,0 +1,67 @@
+
+// auto-generated file for actions
+import P from 'parse';
+import { ActionTrigger, testTriggerCondition } from './helpers';
+
+<% Object.entries(it.service.hooks).forEach(([hookName, hooks]) => { %>
+  <% if (hooks.config) { %>
+    <%~ it.helpers.createImportFromFilename(hooks.config, `hook_${hookName}_`) %>
+  <% } %>
+
+  <% hooks.hooks.forEach((hookPath) => { %>
+    <%~ it.helpers.createImportFromFilename(hookPath, `hook_${hookName}_`) %>
+  <% }) %>
+<% }) %>
+
+<% it.service.triggers.forEach((triggerPath) => { %>
+  <%~ it.helpers.createImportFromFilename(triggerPath, 'trigger_') %>
+<% }) %>
+
+<% it.service.functions.forEach((functionPath) => { %>
+  <%~ it.helpers.createImportFromFilename(functionPath) %>
+<% }) %>
+
+
+type ParseType = typeof P;
+
+export interface <%~ it.service.className %>Attributes {
+  <% Object.entries(it.service.schema.fields).forEach(([fieldName, field]) => { %>
+    <%~ fieldName %><% if (!field.required) { %>?<% } %>: <%~ it.helpers.mapSchemaTypeToTSType(field) %>,
+  <% }) %>
+}
+
+export type <%~ it.service.className %> = P.Object<<%~ it.service.className %>Attributes>;
+
+const service = (Parse: ParseType) => {
+  <% Object.entries(it.service.hooks).forEach(([hookName, hooks]) => { %>
+    <% if (hooks.hooks.length > 0) { %>
+      // HOOKS
+      Parse.Cloud.<%~ hookName %><<%~ it.service.className %>>('<%~ it.service.className %>', async (request) => {
+        <% hooks.hooks.forEach((hookPath) => { %>
+          await <%~ it.helpers.getSanitizedFunctionName(hookPath, `hook_${hookName}_`) %>(request);
+        <% }) %>
+
+        const triggerQuery = new Parse.Query<ActionTrigger>('ActionTrigger')
+          .equalTo('trigger', '<%~ hookName %>')
+          .equalTo('active', true);
+        const triggers = await triggerQuery.findAll();
+        const execTriggers = triggers.filter((trigger) => testTriggerCondition(trigger, request.object) == null);
+        for (const t of execTriggers) {
+          await Parse.Cloud.run(t.get('handler'), request);
+        }
+      }<% if (hooks.config) { %>, <%~ it.helpers.getSanitizedFunctionName(hooks.config, `hook_${hookName}_`) %><% } %>);
+    <% } %>
+  <% }) %>
+
+  // FUNCTIONS
+  <% it.service.functions.forEach((functionPath) => { %>
+    Parse.Cloud.define('<%~ it.helpers.getSanitizedFunctionName(functionPath) %>', <%~ it.helpers.getSanitizedFunctionName(functionPath) %>);
+  <% }) %>
+  
+  // TRIGGER HANDLERS
+  <% it.service.triggers.forEach((triggerPath) => { %>
+    Parse.Cloud.define('<%~ it.helpers.getSanitizedFunctionName(triggerPath) %>', <%~ it.helpers.getSanitizedFunctionName(triggerPath, 'trigger_') %>);
+  <% }) %>
+};
+
+export default service;
