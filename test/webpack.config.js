@@ -1,17 +1,22 @@
 const path = require('path');
 const ParseFunctionsPlugin = require('../dist/main').default;
+// const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 
 
 const isProduction = process.env.NODE_ENV == 'production';
 
 const config = {
+  node: {
+    global: true,
+    __dirname: true,
+    __filename: true,
+  },
   entry: './src/index.ts',
   output: {
     path: path.resolve(__dirname, 'dist'),
   },
   plugins: [
-    // Add your plugins here
-    // Learn more about plugins from https://webpack.js.org/configuration/plugins/
+    // new NodePolyfillPlugin(),
     new ParseFunctionsPlugin(),
   ],
   module: {
@@ -25,13 +30,16 @@ const config = {
         test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,
         type: 'asset',
       },
-
-      // Add your rules for custom modules here
-      // Learn more about loaders from https://webpack.js.org/loaders/
     ],
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.jsx', '.js', '...'],
+    fallback: {
+      url: require.resolve('url'),
+      assert: require.resolve('assert'),
+      crypto: require.resolve('crypto-js'),
+      buffer: require.resolve('buffer'),
+    },
   },
 };
 

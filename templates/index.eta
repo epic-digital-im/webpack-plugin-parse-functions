@@ -6,7 +6,7 @@ import type P from 'parse';
 
 type ParseType = typeof P;
 
-
+/* === TYPES === */
 interface ParseFunctionServiceSchema {
   className: string;
   fields: {
@@ -22,11 +22,26 @@ type ParseFunctionServiceSchemaField = {
   defaultValue?: any;
 }
 
-const initialize = (Parse: ParseType) => {
-  <% Object.keys(it.services).forEach((serviceName) => { %>
-  <%~ serviceName %>(Parse);
-  <% }) %>
+export type SchemaMap = {
+  [prop in ClassNames]: ParseFunctionServiceSchema
 }
+
+export type TriggerHandlerOption = {
+  label: string;
+  value: string;
+}
+
+export type TriggerHandlersMap = {
+  [prop in ClassNames]: TriggerHandlerOption[];
+}
+
+
+/* === CONSTANTS === */
+export const Schemas: SchemaMap = {
+  <% Object.values(it.services).forEach(service => { %>
+    <%~ service.className %>: <%~ JSON.stringify(service.schema, null, 2) %>
+  <% }) %>
+};
 
 export enum ClassNames {
   <% Object.values(it.services).map(service => service.className).forEach(className => { %>
@@ -34,16 +49,27 @@ export enum ClassNames {
   <% }) %>
 }
 
-export type SchemaMap = {
-  [prop in ClassNames]: ParseFunctionServiceSchema
-}
+export const ClassNamesList = Object.values(ClassNames);
 
-export const Schemas: SchemaMap = {
+export const TriggerHandlers: TriggerHandlersMap = {
   <% Object.values(it.services).forEach(service => { %>
-    <%~ service.className %>: <%~ JSON.stringify(service.schema, null, 2) %>
+    <%~ service.className %>: [
+      <% service.triggers.forEach((trigger) => { %>
+        {
+          label: '<%~ it.helpers.getSanitizedFunctionName(trigger) %>',
+          value: '<%~ it.helpers.getSanitizedFunctionName(trigger) %>',
+        },
+      <% }) %>
+    ],
   <% }) %>
 };
 
 
+/* === INITIALIZER === */
+const initialize = (Parse: ParseType) => {
+  <% Object.keys(it.services).forEach((serviceName) => { %>
+  <%~ serviceName %>(Parse);
+  <% }) %>
+}
 
 export default initialize;

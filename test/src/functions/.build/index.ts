@@ -3,6 +3,7 @@ import actions from "./actions";
 
 type ParseType = typeof P;
 
+/* === TYPES === */
 interface ParseFunctionServiceSchema {
   className: string;
   fields: {
@@ -18,18 +19,20 @@ type ParseFunctionServiceSchemaField = {
   defaultValue?: any;
 };
 
-const initialize = (Parse: ParseType) => {
-  actions(Parse);
-};
-
-export enum ClassNames {
-  ActionItem = "ActionItem",
-}
-
 export type SchemaMap = {
   [prop in ClassNames]: ParseFunctionServiceSchema;
 };
 
+export type TriggerHandlerOption = {
+  label: string;
+  value: string;
+};
+
+export type TriggerHandlersMap = {
+  [prop in ClassNames]: TriggerHandlerOption[];
+};
+
+/* === CONSTANTS === */
 export const Schemas: SchemaMap = {
   ActionItem: {
     className: "ActionItem",
@@ -155,6 +158,26 @@ export const Schemas: SchemaMap = {
       },
     },
   },
+};
+
+export enum ClassNames {
+  ActionItem = "ActionItem",
+}
+
+export const ClassNamesList = Object.values(ClassNames);
+
+export const TriggerHandlers: TriggerHandlersMap = {
+  ActionItem: [
+    {
+      label: "doTriggerThing",
+      value: "doTriggerThing",
+    },
+  ],
+};
+
+/* === INITIALIZER === */
+const initialize = (Parse: ParseType) => {
+  actions(Parse);
 };
 
 export default initialize;

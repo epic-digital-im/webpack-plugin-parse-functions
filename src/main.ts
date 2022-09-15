@@ -6,13 +6,12 @@ import path from 'path';
 import fs from 'fs';
 
 
-const serviceTemplatePath = require.resolve(path.resolve(__dirname, '../templates/service.eta'));
-const serviceTemplateString = fs.readFileSync(serviceTemplatePath, { encoding: 'utf-8' });
-const indexTemplatePath = require.resolve(path.resolve(__dirname, '../templates/index.eta'));
-const indexTemplateString = fs.readFileSync(indexTemplatePath, { encoding: 'utf-8' });
-const helpersTemplatePath = require.resolve(path.resolve(__dirname, '../templates/helpers.eta'));
-const helpersTemplateString = fs.readFileSync(helpersTemplatePath, { encoding: 'utf-8' });
+eta.configure({
+  views: path.resolve(__dirname, '../templates'),
+});
 
+
+/* === TYPES === */
 interface ParseFunctionServiceHook {
   hooks: string[];
   config?: string;
@@ -79,6 +78,7 @@ interface ParseFunctionService {
   functions: string[];
   hooks: ParseFunctionServiceHooks,
   triggers: string[];
+  jobs: string[];
 }
 
 interface ParseServiceMap {
@@ -89,6 +89,8 @@ interface ParseFunctionPluginOptions {
   entry?: string;
 }
 
+
+/* === PLUGIN === */
 export class ParseFunctionsPlugin implements WebpackPluginInstance {
   options: ParseFunctionPluginOptions;
   basePath?: string;
@@ -122,7 +124,7 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
     }).apply(compiler);
   }
 
-  private startBuild = (compilation: Compilation) => {
+  private startBuild = async (compilation: Compilation) => {
     // clean build folder
     try {
       fs.rmSync(this.buildPath!, { recursive: true });
@@ -139,6 +141,7 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
       const schema: ParseFunctionServiceSchema = JSON.parse(fs.readFileSync(schemaPath, { encoding: 'utf-8' }));
       const triggers = glob.sync(`${servicePath}/triggers/*`);
       const functions = glob.sync(`${servicePath}/functions/**/*`);
+      const jobs = glob.sync(`${servicePath}/jobs/**/*`);
       const hooks = Object.values(ServiceHooks).reduce((hMemo, hook) => {
         const hookPaths = glob.sync(`${servicePath}/${hook}/*`);
         const hookConfig = hookPaths.find((path) => /\/config\.t|js$/.test(path));
@@ -160,42 +163,47 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
         functions,
         triggers,
         hooks,
+        jobs
       };
       return memo;
     }, {} as ParseServiceMap);
     
-    Object.entries(services).forEach(([serviceName, service]) => {
+    Object.entries(services).forEach(async ([serviceName, service]) => {
       const servicePath = path.resolve(this.buildPath!, `${serviceName}.ts`);
       compilation.fileDependencies.add(this.indexFilePath!);
-      fs.writeFileSync(servicePath, this.makeServiceFile(service));
+      fs.writeFileSync(servicePath, await this.makeServiceFile(service));
     });
 
-    fs.writeFileSync(path.resolve(`${this.buildPath}`, 'helpers.ts'), this.makeHelpersFile(services));
-    fs.writeFileSync(this.indexFilePath!, this.makeServiceIndexFile(services));
+    const helpersFile = await this.makeHelpersFile(services);
+    const indexFile = await this.makeServiceIndexFile(services);
+
+    fs.writeFileSync(path.resolve(`${this.buildPath}`, 'helpers.ts'), helpersFile);
+    fs.writeFileSync(this.indexFilePath!, indexFile);
 
     compilation.fileDependencies.add(this.indexFilePath!);
   }
 
-  private makeHelpersFile(services: ParseServiceMap) {
-    const helpersFileString = eta.render(helpersTemplateString, { services, helpers: this.templateHelpers }) as string;
+  private async makeHelpersFile(services: ParseServiceMap): Promise<string> {
+    const helpersFileString = await eta.renderFile('helpers.eta', { services, helpers: this.templateHelpers }) as string;
     const f = prettier.format(helpersFileString, { parser: 'typescript', printWidth: 112 });
     return f;
   }
 
-  private makeServiceIndexFile(services: ParseServiceMap) {
-    const indexFileString = eta.render(indexTemplateString, { services, helpers: this.templateHelpers }) as string;
+  private async makeServiceIndexFile(services: ParseServiceMap): Promise<string> {
+    const indexFileString = await eta.renderFile('index.eta', { services, helpers: this.templateHelpers }) as string;
     const f = prettier.format(indexFileString, { parser: 'typescript', printWidth: 112 });
     return f;
   }
 
-  private makeServiceFile(service: ParseFunctionService): string {
-    const serviceFileString = eta.render(serviceTemplateString, { service, helpers: this.templateHelpers }) as string;
+  private async makeServiceFile(service: ParseFunctionService): Promise<string> {
+    const serviceFileString = await eta.renderFile('service.eta', { service, helpers: this.templateHelpers }) as string;
     const f = prettier.format(serviceFileString, { parser: 'typescript', printWidth: 112 });
     return f;
   }
 }
 
 
+/* === TEMPLATE HELPERS === */
 function createImportFromFilename(filePath: string, prefix: string = '') {
   return `import ${getSanitizedFunctionName(filePath, prefix)} from '${filePath.replace(/\.ts$/, '')}';`
 }
