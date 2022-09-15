@@ -7,17 +7,17 @@ If you're familiar with Next.js, you know that the routes are built out based on
 The default file structure looks like this:
 - src
   - functions
-    - <serviceName>
+    - `<serviceName>`
       - schema.json -- the schema of the `Parse.Object`-based service
-      - <hookName>
-        - 0.<hookName>.ts
+      - `<hookName>`
+        - `0.<hookName>.ts`
         - config.ts -- the configuration object to be passed to `Parse.Cloud.<hookName>(<className>, <handler>, <config>)`
       - functions
-        - <functionName>.ts - functions to be defined with `Parse.Cloud.define('<functionName>', <function>)`
+        - `<functionName>.ts` - functions to be defined with `Parse.Cloud.define('<functionName>', <function>)`
       - jobs
-        - <jobName>.ts - jobs to be defined with `Parse.Cloud.job('<functionName>', <function>)`
+        - `<jobName>.ts` - jobs to be defined with `Parse.Cloud.job('<functionName>', <function>)`
       - triggers
-        - <triggerName>.ts - post-hook triggers that will conditionally run `Parse.Cloud.run('<triggerName>', payload)`, where `payload` is the parameter of the running hook
+        - `<triggerName>.ts` - post-hook triggers that will conditionally run `Parse.Cloud.run('<triggerName>', payload)`, where `payload` is the parameter of the running hook
 
 The available hooks are:
 - beforeSave
@@ -80,14 +80,14 @@ The default option should be preferred, but there may be times where the project
 When the plugin runs, it will aggregate the files (according to the file structure above) and transpile them into modules in a `.build` folder that may then be accessed by importing members from the `moduleAlias` (default `@@functions`);
 
 # TODO
-[] Create custom hook handlers for:
-  [] beforeCreate -- fires before the initial creation of an object
-  [] afterCreate -- fires after the initial creation of an object
-  [] beforeUpdate -- fires before a previously created object is updated
-  [] afterUpdate -- fires after a previously created object is updated
-  [] hourly -- a cron job that fires hourly
-  [] daily -- a cron job that fires daily
-  [] weekly -- a cron job that fires weekly
-  [] monthly -- a cron job that fires monthly
-  [] datetime -- a cron job that fires on a specific datetime
-[] Rework functions, jobs, and triggers to export a factory function that takes a `Parse` instance as the first parameter, a configuration or context parameter, and returns a function
+- [] Create custom hook handlers for:
+  - [] beforeCreate -- fires before the initial creation of an object
+  - [] afterCreate -- fires after the initial creation of an object
+  - [] beforeUpdate -- fires before a previously created object is updated
+  - [] afterUpdate -- fires after a previously created object is updated
+  - [] hourly -- a cron job that fires hourly
+  - [] daily -- a cron job that fires daily
+  - [] weekly -- a cron job that fires weekly
+  - [] monthly -- a cron job that fires monthly
+  - [] datetime -- a cron job that fires on a specific datetime
+- [] Rework functions, jobs, and triggers to export a factory function that takes a `Parse` instance as the first parameter, a configuration or context parameter, and returns a function
