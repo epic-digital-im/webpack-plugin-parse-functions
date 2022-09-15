@@ -86,11 +86,17 @@ interface ParseServiceMap {
 }
 
 interface ParseFunctionPluginOptions {
-  entry?: string;
+  functionDirectory: string;
+  moduleAlias: string;
 }
 
 
 /* === PLUGIN === */
+const DEFAULT_OPTIONS: ParseFunctionPluginOptions = {
+  functionDirectory: 'src/functions',
+  moduleAlias: '@@functions',
+}
+
 export class ParseFunctionsPlugin implements WebpackPluginInstance {
   options: ParseFunctionPluginOptions;
   basePath?: string;
@@ -107,11 +113,11 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
   }
 
   constructor(opts?: Partial<ParseFunctionPluginOptions>) {
-    this.options = opts || {};
+    this.options = Object.assign({}, DEFAULT_OPTIONS, opts);
   }
 
   async apply(compiler: Compiler) {
-    this.basePath = path.resolve(`${compiler.context}/src/functions`);
+    this.basePath = path.resolve(`${compiler.context}`, this.options.functionDirectory);
     this.schemaPaths = glob.sync(`${this.basePath}/**/schema.json`);
     this.buildPath = path.resolve(this.basePath, '.build');
     this.indexFilePath = path.resolve(this.buildPath, `index.ts`);
@@ -120,7 +126,7 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
 
     // Look for import of modules that begins with `@@function` and replace with build folder
     new NormalModuleReplacementPlugin(/^@@functions(.*)/, (resource: any) => {
-      resource.request = resource.request.replace('@@functions', this.buildPath);
+      resource.request = resource.request.replace(this.options.moduleAlias, this.buildPath);
     }).apply(compiler);
   }
 
