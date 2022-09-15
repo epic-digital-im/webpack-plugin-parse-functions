@@ -1,6 +1,21 @@
-# Parse Functions Plugin
+<p align="center">
+ <img width="100px" src="https://raw.githubusercontent.com/epicdigitalmedia/epic-ts-npm-boilerplate/main/.github/images/favicon512x512-npm.png" align="center" alt=":package: webpack-plugin-parse-functions" />
+ <img width="100px" src="https://avatars.githubusercontent.com/u/113625277?s=200&v=4" align="center" alt=":package: webpack-plugin-parse-functions" />
+ <h2 align="center">:package: webpack-plugin-parse-functions</h2>
+ <p align="center">Parse Platform Function Plugin</p>
+  <p align="center">
+    <a href="https://github.com/epic-digital-im/webpack-plugin-parse-functions/issues/new/choose">Report Bug</a>
+    <a href="https://github.com/epic-digital-im/webpack-plugin-parse-functions/issues/new/choose">Request Feature</a>
+  </p>
+
+<p align="center">
+  <strong>Parse Platform Function Plugin</strong> 🚀
+</p>
+
+# Overview
 This is a Webpack plugin designed to make development on top of the Parse Platform more seamless.
 
+# Getting Started
 ## How it works
 If you're familiar with Next.js, you know that the routes are built out based on the file structure of the project. This follows a similar methodology.
 
