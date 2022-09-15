@@ -107,4 +107,4 @@ When the plugin runs, it will aggregate the files (according to the file structu
   - [ ] monthly -- a cron job that fires monthly
   - [ ] datetime -- a cron job that fires on a specific datetime
 - [ ] Rework functions, jobs, and triggers to export a factory function that takes a `Parse` instance as the first parameter, a configuration or context parameter, and returns a function
-- [x] Make a `processTriggers` function to avoid duplicate code
+- [x] Make a `processActionTriggers` function to avoid duplicate code
