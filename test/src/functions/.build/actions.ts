@@ -1,6 +1,6 @@
 // auto-generated file for actions
 import P from "parse";
-import { ActionTrigger, testTriggerCondition } from "./helpers";
+import { ActionTrigger, processActionTriggers } from "./helpers";
 
 import hook_afterSave_hook from "/Users/dustinchaffin/Developer/EpicDM/webpack-plugin-parse-functions/test/src/functions/actions/afterSave/0.hook";
 
@@ -62,14 +62,10 @@ const service = (Parse: ParseType) => {
   Parse.Cloud.afterSave<ActionItem>("ActionItem", async (request) => {
     await hook_afterSave_hook(request);
 
-    const triggerQuery = new Parse.Query<ActionTrigger>("ActionTrigger")
-      .equalTo("trigger", "afterSave")
-      .equalTo("active", true);
-    const triggers = await triggerQuery.findAll();
-    const execTriggers = triggers.filter((trigger) => testTriggerCondition(trigger, request.object) == null);
-    for (const t of execTriggers) {
-      await Parse.Cloud.run(t.get("handler"), request);
-    }
+    await processActionTriggers<ActionItem>({
+      object: request.object,
+      triggerName: "afterSave",
+    });
   });
 
   Parse.Cloud.beforeSave<ActionItem>(
@@ -77,14 +73,10 @@ const service = (Parse: ParseType) => {
     async (request) => {
       await hook_beforeSave_hook(request);
 
-      const triggerQuery = new Parse.Query<ActionTrigger>("ActionTrigger")
-        .equalTo("trigger", "beforeSave")
-        .equalTo("active", true);
-      const triggers = await triggerQuery.findAll();
-      const execTriggers = triggers.filter((trigger) => testTriggerCondition(trigger, request.object) == null);
-      for (const t of execTriggers) {
-        await Parse.Cloud.run(t.get("handler"), request);
-      }
+      await processActionTriggers<ActionItem>({
+        object: request.object,
+        triggerName: "beforeSave",
+      });
     },
     hook_beforeSave_config
   );
@@ -92,14 +84,10 @@ const service = (Parse: ParseType) => {
   Parse.Cloud.beforeDelete<ActionItem>("ActionItem", async (request) => {
     await hook_beforeDelete_hook(request);
 
-    const triggerQuery = new Parse.Query<ActionTrigger>("ActionTrigger")
-      .equalTo("trigger", "beforeDelete")
-      .equalTo("active", true);
-    const triggers = await triggerQuery.findAll();
-    const execTriggers = triggers.filter((trigger) => testTriggerCondition(trigger, request.object) == null);
-    for (const t of execTriggers) {
-      await Parse.Cloud.run(t.get("handler"), request);
-    }
+    await processActionTriggers<ActionItem>({
+      object: request.object,
+      triggerName: "beforeDelete",
+    });
   });
 
   // FUNCTIONS

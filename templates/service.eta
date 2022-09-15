@@ -1,7 +1,7 @@
 
 // auto-generated file for actions
 import P from 'parse';
-import { ActionTrigger, testTriggerCondition } from './helpers';
+import { ActionTrigger, processActionTriggers } from './helpers';
 
 <% Object.entries(it.service.hooks).forEach(([hookName, hooks]) => { %>
   <% if (hooks.config) { %>
@@ -67,14 +67,10 @@ const service = (Parse: ParseType) => {
           await <%~ it.helpers.getSanitizedFunctionName(hookPath, `hook_${hookName}_`) %>(request);
         <% }) %>
 
-        const triggerQuery = new Parse.Query<ActionTrigger>('ActionTrigger')
-          .equalTo('trigger', '<%~ hookName %>')
-          .equalTo('active', true);
-        const triggers = await triggerQuery.findAll();
-        const execTriggers = triggers.filter((trigger) => testTriggerCondition(trigger, request.object) == null);
-        for (const t of execTriggers) {
-          await Parse.Cloud.run(t.get('handler'), request);
-        }
+        await processActionTriggers<<%~ it.service.className %>>({
+          object: request.object,
+          triggerName: '<%~ hookName %>',
+        });
       }<% if (hooks.config) { %>, <%~ it.helpers.getSanitizedFunctionName(hooks.config, `hook_${hookName}_`) %><% } %>);
     <% } %>
     

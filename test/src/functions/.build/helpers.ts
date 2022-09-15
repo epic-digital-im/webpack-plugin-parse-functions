@@ -94,3 +94,31 @@ export async function testTriggerCondition<T extends Parse.Object = Parse.Object
         : `Property '${property}' is unique (and should not be), with value '${value}'`;
   }
 }
+
+interface ProcessActionTriggerParams<T extends Parse.Object = Parse.Object> {
+  object: T;
+  triggerName: string;
+}
+
+export async function processActionTriggers<T extends Parse.Object = Parse.Object>(
+  params: ProcessActionTriggerParams<T>
+) {
+  const { triggerName, object } = params;
+  const actionTriggerQuery = new Parse.Query<ActionTrigger>("ActionTrigger")
+    .equalTo("active", true)
+    .equalTo("objectClass", object.className)
+    .equalTo("trigger", triggerName);
+  const triggers = await actionTriggerQuery.findAll();
+
+  for (const trigger of triggers) {
+    const conditionMessage = await testTriggerCondition(trigger, object);
+
+    if (conditionMessage != null) {
+      // console.warn('[ACTION TRIGGER]', conditionMessage);
+      continue;
+    }
+
+    const handler = trigger.get("handler");
+    await Parse.Cloud.run(handler, object);
+  }
+}
