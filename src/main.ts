@@ -12,20 +12,24 @@ eta.configure({
 
 
 /* === TYPES === */
-interface ParseFunctionServiceHook {
-  hooks: string[];
-  config?: string;
+enum NativeHookNames {
+  beforeSave = 'beforeSave',
+  afterSave = 'afterSave',
+  beforeDelete = 'beforeDelete',
+  afterDelete = 'afterDelete',
 }
 
-enum ServiceHooks {
-  afterSave = 'afterSave',
-  afterDelete = 'afterDelete',
-  afterCreate = 'afterCreate',
-  afterUpdate = 'afterUpdate',
-  beforeSave = 'beforeSave',
-  beforeDelete = 'beforeDelete',
+enum AdditionalBeforeSaveHookNames {
   beforeCreate = 'beforeCreate',
   beforeUpdate = 'beforeUpdate',
+}
+
+enum AdditionalAfterSaveHookNames {
+  afterCreate = 'afterCreate',
+  afterUpdate = 'afterUpdate',
+}
+
+enum CronHookNames {
   hourly = 'hourly',
   daily = 'daily',
   weekly = 'weekly',
@@ -33,8 +37,41 @@ enum ServiceHooks {
   datetime = 'datetime',
 }
 
-type ParseFunctionServiceHooks = {
-  [prop in ServiceHooks]: ParseFunctionServiceHook;
+const SubhooksMap = {
+  [NativeHookNames.beforeSave]: [
+    AdditionalBeforeSaveHookNames.beforeCreate,
+    AdditionalBeforeSaveHookNames.beforeUpdate,
+  ],
+  [NativeHookNames.afterSave]: [
+    AdditionalAfterSaveHookNames.afterCreate,
+    AdditionalAfterSaveHookNames.afterUpdate,
+  ],
+  [NativeHookNames.beforeDelete]: [],
+  [NativeHookNames.afterDelete]: [],
+};
+
+interface ServiceHook {
+  hooks: string[];
+  config?: string;
+}
+
+const AdditionalHookNames = {
+  ...AdditionalAfterSaveHookNames,
+  ...AdditionalBeforeSaveHookNames,
+};
+
+const HookNames = {
+  ...NativeHookNames,
+  ...AdditionalHookNames,
+  ...CronHookNames,
+};
+
+type Hooks = {
+  [prop in keyof typeof HookNames]: ServiceHook;
+}
+
+type CronHooks = {
+  [prop in CronHookNames]: ServiceHook;
 }
 
 enum ParseServiceSchemaFieldType {
@@ -76,7 +113,8 @@ interface ParseFunctionService {
   schemaPath: string;
   schema: ParseFunctionServiceSchema;
   functions: string[];
-  hooks: ParseFunctionServiceHooks,
+  hooks: Hooks,
+  // cronHooks: CronHooks,
   triggers: string[];
   jobs: string[];
 }
@@ -106,6 +144,9 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
 
   get templateHelpers() {
     return {
+      SubhooksMap,
+      CronHookNames,
+      AdditionalHookNames,
       mapSchemaTypeToTSType,
       createImportFromFilename,
       getSanitizedFunctionName,
@@ -148,18 +189,18 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
       const triggers = glob.sync(`${servicePath}/triggers/*`);
       const functions = glob.sync(`${servicePath}/functions/**/*`);
       const jobs = glob.sync(`${servicePath}/jobs/**/*`);
-      const hooks = Object.values(ServiceHooks).reduce((hMemo, hook) => {
-        const hookPaths = glob.sync(`${servicePath}/${hook}/*`);
+      const hooks: Hooks = Object.values(HookNames).reduce((hMemo, hookName) => {
+        const hookPaths = glob.sync(`${servicePath}/${hookName}/*`);
         const hookConfig = hookPaths.find((path) => /\/config\.t|js$/.test(path));
         if (hookConfig) {
           hookPaths.splice(hookPaths.indexOf(hookConfig), 1);
         }
-        hMemo[hook] = {
+        hMemo[hookName as keyof typeof HookNames] = {
           hooks: hookPaths,
           config: hookConfig,
         };
         return hMemo;
-      }, {} as ParseFunctionServiceHooks);
+      }, {} as Hooks);
       
       memo[serviceDirName] = {
         name: serviceDirName,
@@ -190,19 +231,28 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
   }
 
   private async makeHelpersFile(services: ParseServiceMap): Promise<string> {
-    const helpersFileString = await eta.renderFile('helpers.eta', { services, helpers: this.templateHelpers }) as string;
+    const helpersFileString = await eta.renderFile(
+      'helpers.eta',
+      { services, helpers: this.templateHelpers }
+    ) as string;
     const f = prettier.format(helpersFileString, { parser: 'typescript', printWidth: 112 });
     return f;
   }
 
   private async makeServiceIndexFile(services: ParseServiceMap): Promise<string> {
-    const indexFileString = await eta.renderFile('index.eta', { services, helpers: this.templateHelpers }) as string;
+    const indexFileString = await eta.renderFile(
+      'index.eta',
+      { services, helpers: this.templateHelpers }
+    ) as string;
     const f = prettier.format(indexFileString, { parser: 'typescript', printWidth: 112 });
     return f;
   }
 
   private async makeServiceFile(service: ParseFunctionService): Promise<string> {
-    const serviceFileString = await eta.renderFile('service.eta', { service, helpers: this.templateHelpers }) as string;
+    const serviceFileString = await eta.renderFile(
+      'service.eta',
+      { service, helpers: this.templateHelpers }
+    ) as string;
     const f = prettier.format(serviceFileString, { parser: 'typescript', printWidth: 112 });
     return f;
   }
