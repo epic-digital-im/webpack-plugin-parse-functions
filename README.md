@@ -40,16 +40,17 @@ The available hooks are:
 - afterSave
 - beforeDelete
 - afterDelete
-- TODO:
-  - afterCreate
-  - afterUpdate
-  - beforeCreate
-  - beforeUpdate
-  - hourly
-  - daily
-  - weekly
-  - monthly
-  - datetime
+- afterCreate
+- afterUpdate
+- beforeCreate
+- beforeUpdate
+
+These hooks targeted at cron jobs are defined and available to be run with `Parse.Cloud.startJob`
+- hourly
+- daily
+- weekly
+- monthly
+- datetime
 
 ## ActionTrigger
 This is a special type of `Parse.Object` that is used to trigger cascading actions conditionally when a hook is run.
@@ -149,15 +150,15 @@ export default initialize;
 ```
 
 # TODO
-- [ ] Create custom hook handlers for:
-  - [ ] beforeCreate -- fires before the initial creation of an object
-  - [ ] afterCreate -- fires after the initial creation of an object
-  - [ ] beforeUpdate -- fires before a previously created object is updated
-  - [ ] afterUpdate -- fires after a previously created object is updated
-  - [ ] hourly -- a cron job that fires hourly
-  - [ ] daily -- a cron job that fires daily
-  - [ ] weekly -- a cron job that fires weekly
-  - [ ] monthly -- a cron job that fires monthly
-  - [ ] datetime -- a cron job that fires on a specific datetime
-- [ ] Rework functions, jobs, and triggers to export a factory function that takes a `Parse` instance as the first parameter, a configuration or context parameter, and returns a function
+- [x] Create custom hook handlers for:
+  - [x] beforeCreate -- fires before the initial creation of an object
+  - [x] afterCreate -- fires after the initial creation of an object
+  - [x] beforeUpdate -- fires before a previously created object is updated
+  - [x] afterUpdate -- fires after a previously created object is updated
+  - [x] hourly -- a cron job that fires hourly
+  - [x] daily -- a cron job that fires daily
+  - [x] weekly -- a cron job that fires weekly
+  - [x] monthly -- a cron job that fires monthly
+  - [x] datetime -- a cron job that fires on a specific datetime
 - [x] Make a `processActionTriggers` function to avoid duplicate code
+- [ ] Rework functions, jobs, and triggers to export a factory function that takes a `Parse` instance as the first parameter, a configuration or context parameter, and returns a function
