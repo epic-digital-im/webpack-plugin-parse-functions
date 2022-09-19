@@ -45,8 +45,8 @@ The available hooks are:
 - beforeCreate
 - beforeUpdate
 
-These hooks targeted at cron jobs are defined and available to be run with `Parse.Cloud.startJob`
-- hourly
+These hooks targeted at cron jobs are defined and available to be run with `Parse.Cloud.startJob('<ClassName>_<frequency>')`
+- hourly -- e.g. `Parse.Cloud.startJob('ActionItem_hourly')`
 - daily
 - weekly
 - monthly
