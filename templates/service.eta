@@ -1,7 +1,10 @@
 
 // auto-generated file for actions
 import P from 'parse';
-import { ActionTrigger, processActionTriggers } from './helpers';
+import { ActionTrigger, processActionTriggers, ServiceInitializer } from './helpers';
+<% if (it.service.config) { %>
+  import defaultServiceConfig, { ServiceConfig } from '<%~ it.service.config.replace(/\.ts$/, '') %>';
+<% } %>
 
 <% Object.entries(it.service.hooks).forEach(([hookName, hooks]) => { %>
   <% if (hooks.config) { %>
@@ -37,6 +40,10 @@ export interface <%~ it.service.className %>Attributes {
 
 export type <%~ it.service.className %> = P.Object<<%~ it.service.className %>Attributes>;
 
+<% if (it.service.config) { %>
+  export { ServiceConfig };
+<% } %>
+
 
 /* === CONSTANTS === */
 const defaultFunctionConfig = {
@@ -58,7 +65,10 @@ const defaultTriggerConfig = {
 
 
 /* === SERVICE === */
-const service = (Parse: ParseType) => {
+const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> <% } else { %> ServiceInitializer <% } %> =
+  (Parse: ParseType, config = <% if (it.service.config) { %> defaultServiceConfig <% } else { %> {} <% } %>) => {
+  const configWithDefaults = <% if (it.service.config) { %> Object.assign({}, defaultServiceConfig, config) <% } else { %> config <% } %>;
+
   // HOOKS
   <% Object.entries(it.helpers.SubhooksMap).forEach(([hookName, subhooks]) => { %>
     <% const hooks = it.service.hooks[hookName] %>

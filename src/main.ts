@@ -117,6 +117,7 @@ interface ParseFunctionService {
   // cronHooks: CronHooks,
   triggers: string[];
   jobs: string[];
+  config?: string;
 }
 
 interface ParseServiceMap {
@@ -185,7 +186,9 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
       const p = schemaPath.split(path.sep);
       const serviceDirName = p[p.length - 2];
       const servicePath = path.join(this.basePath!, serviceDirName);
+      const configPath = path.join(servicePath, 'config.ts');
       const schema: ParseFunctionServiceSchema = JSON.parse(fs.readFileSync(schemaPath, { encoding: 'utf-8' }));
+      const config = fs.existsSync(configPath) ? configPath : undefined;
       const triggers = glob.sync(`${servicePath}/triggers/*`);
       const functions = glob.sync(`${servicePath}/functions/**/*`);
       const jobs = glob.sync(`${servicePath}/jobs/**/*`);
@@ -210,7 +213,8 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
         functions,
         triggers,
         hooks,
-        jobs
+        jobs,
+        config,
       };
       return memo;
     }, {} as ParseServiceMap);

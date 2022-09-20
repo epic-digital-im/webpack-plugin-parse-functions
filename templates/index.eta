@@ -1,12 +1,19 @@
 import type P from 'parse';
-<% Object.keys(it.services).forEach((serviceName) => { %>
-  import <%~ serviceName %> from './<%~ serviceName %>';
+<% Object.entries(it.services).forEach(([serviceName, service]) => { %>
+  import <%~ serviceName %><% if (service.config) { %>, { ServiceConfig as <%~ service.className %>ServiceConfig } <% } %> from './<%~ serviceName %>';
 <% }) %>
 
 
 type ParseType = typeof P;
 
 /* === TYPES === */
+interface ParseFunctionConfig {
+  <% Object.entries(it.services).forEach(([serviceName, service]) => { %>
+    <% if (service.config == null) { return; } %>
+    <%~ serviceName %>?: <%~ service.className %>ServiceConfig;
+  <% }) %>
+}
+
 interface ParseFunctionServiceSchema {
   className: string;
   fields: {
@@ -66,9 +73,9 @@ export const TriggerHandlers: TriggerHandlersMap = {
 
 
 /* === INITIALIZER === */
-const initialize = (Parse: ParseType) => {
-  <% Object.keys(it.services).forEach((serviceName) => { %>
-  <%~ serviceName %>(Parse);
+const initialize = (Parse: ParseType, config?: ParseFunctionConfig) => {
+  <% Object.entries(it.services).forEach(([serviceName, service]) => { %>
+  <%~ serviceName %>(Parse<% if (service.config) { %>, config?.<%~ serviceName %> <% } %>);
   <% }) %>
 }
 

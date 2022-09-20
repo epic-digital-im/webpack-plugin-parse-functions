@@ -136,3 +136,17 @@ export async function processActionTriggers<T extends Parse.Object = Parse.Objec
     await Parse.Cloud.run(handler, object);
   }
 }
+
+type ACLSchema = {
+  [key: string]: {
+    read?: boolean;
+    write?: boolean;
+  }
+}
+
+export type BaseServiceConfig = {
+  aclSchema?: ACLSchema,
+  [key: string]: any;
+}
+
+export type ServiceInitializer<T extends BaseServiceConfig = BaseServiceConfig> = (Parse: Parse, config?: T) => any;
