@@ -1,5 +1,9 @@
+import { ServiceConfig } from '@@functions/actions';
+import P from 'parse';
 
-const someFunction = (request: any) => {
+type PP = typeof P;
+
+const someFunction = (request: any, Parse: PP, config?: ServiceConfig) => {
 
 };
 

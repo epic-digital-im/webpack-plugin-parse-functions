@@ -1,5 +1,9 @@
+import { ActionItem, ServiceConfig } from '@@functions/actions';
+import P from 'parse';
 
-async function someJob(request: any): Promise<void> {
+type PP = typeof P;
+
+async function someJob(request: any, Parse: PP, config?: ServiceConfig): Promise<void> {
 
 }
 

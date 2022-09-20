@@ -116,7 +116,7 @@ interface ProcessActionTriggerParams<T extends Parse.Object = Parse.Object> {
   triggerName: string;
 }
 
-export async function processActionTriggers<T extends Parse.Object = Parse.Object>(params: ProcessActionTriggerParams<T>) {
+export async function processActionTriggers<T extends Parse.Object = Parse.Object>(Parse: Parse, params: ProcessActionTriggerParams<T>) {
   const { triggerName, object } = params;
   const actionTriggerQuery = new Parse.Query<ActionTrigger>('ActionTrigger')
     .equalTo('active', true)

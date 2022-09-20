@@ -75,7 +75,7 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
     <% if (hooks && hooks.hooks.length > 0) { %>
       Parse.Cloud.<%~ hookName %><<%~ it.service.className %>>('<%~ it.service.className %>', async (request) => {
         <% hooks.hooks.forEach((hookPath) => { %>
-          await <%~ it.helpers.getSanitizedFunctionName(hookPath, `hook_${hookName}_`) %>(request);
+          await <%~ it.helpers.getSanitizedFunctionName(hookPath, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
         <% }) %>
 
         <% for (const subhookName of subhooks) { %>
@@ -85,7 +85,7 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
           <% } %>
         <% } %>
 
-        await processActionTriggers<<%~ it.service.className %>>({
+        await processActionTriggers<<%~ it.service.className %>>(Parse, {
           object: request.object,
           triggerName: '<%~ hookName %>',
         });
@@ -105,7 +105,7 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
         if (!object.isNew()) return;
         <% if (hook && hook.hooks.length > 0) { %>
           <% for (h of hook.hooks) { %>
-            await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request);
+            await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
           <% } %>
         <% } %>
       },
@@ -123,7 +123,7 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
         if (!object.isNew()) return;
         <% if (hook && hook.hooks.length > 0) { %>
           <% for (h of hook.hooks) { %>
-            await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request);
+            await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, configWithDefaults, Parse);
           <% } %>
         <% } %>
       },
@@ -141,7 +141,7 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
         if (object.isNew()) return;
         <% if (hook && hook.hooks.length > 0) { %>
           <% for (h of hook.hooks) { %>
-            await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request);
+            await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
           <% } %>
         <% } %>
       },
@@ -159,7 +159,7 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
         if (object.isNew()) return;
         <% if (hook && hook.hooks.length > 0) { %>
           <% for (h of hook.hooks) { %>
-            await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request);
+            await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
           <% } %>
         <% } %>
       },
@@ -177,7 +177,7 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
           const object = request.params;
           <% if (hook && hook.hooks.length > 0) { %>
             <% for (h of hook.hooks) { %>
-              await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request);
+              await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
             <% } %>
           <% } %>
         },
@@ -190,7 +190,7 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
   <% it.service.functions.forEach((functionPath) => { %>
     Parse.Cloud.define(
       '<%~ it.helpers.getSanitizedFunctionName(functionPath) %>',
-      <%~ it.helpers.getSanitizedFunctionName(functionPath) %>,
+      (request) => <%~ it.helpers.getSanitizedFunctionName(functionPath) %>(request, Parse, configWithDefaults),
       require('<%~ functionPath %>')?.config || defaultFunctionConfig
     );
   <% }) %>
@@ -199,7 +199,7 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
   <% it.service.jobs.forEach((jobPath) => { %>
     Parse.Cloud.job(
       '<%~ it.helpers.getSanitizedFunctionName(jobPath) %>',
-      <%~ it.helpers.getSanitizedFunctionName(jobPath, 'job_') %>
+      (request) => <%~ it.helpers.getSanitizedFunctionName(jobPath, 'job_') %>(request, Parse, configWithDefaults)
     );
   <% }) %>
   
@@ -207,7 +207,7 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
   <% it.service.triggers.forEach((triggerPath) => { %>
     Parse.Cloud.define(
       '<%~ it.helpers.getSanitizedFunctionName(triggerPath) %>',
-      <%~ it.helpers.getSanitizedFunctionName(triggerPath, 'trigger_') %>,
+      (request) => <%~ it.helpers.getSanitizedFunctionName(triggerPath, 'trigger_') %>(request, Parse, configWithDefaults),
       require('<%~ triggerPath %>')?.config || defaultTriggerConfig
     );
   <% }) %>

@@ -1,5 +1,9 @@
 import { ClassNames } from '@@functions';
-import { ActionItem } from '@@functions/actions';
+import { ActionItem, ServiceConfig } from '@@functions/actions';
+import P from 'parse';
+
+type PP = typeof P;
+
 import crypto from 'crypto';
 
 
@@ -7,7 +11,7 @@ export const createHash = (obj: any) => {
   return crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex');
 }
 
-async function createActionItem(request: any) {
+async function createActionItem(request: any, Parse: PP, config?: ServiceConfig) {
   const {
     name,
     type,

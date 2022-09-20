@@ -1,5 +1,9 @@
+import { ServiceConfig } from '@@functions/actions';
+import P from 'parse';
 
-const beforeCreateHook = (request: any) => {
+type PP = typeof P;
+
+const beforeCreateHook = (request: any, Parse: PP, config?: ServiceConfig) => {
 
 };
 
