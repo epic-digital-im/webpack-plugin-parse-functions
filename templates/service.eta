@@ -205,7 +205,7 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
   
   // TRIGGER HANDLERS
   <% it.service.triggers.forEach((triggerPath) => { %>
-    Parse.Cloud.define(
+    Parse.Cloud.define<(params: ActionTrigger) => any>(
       '<%~ it.helpers.getSanitizedFunctionName(triggerPath) %>',
       (request) => <%~ it.helpers.getSanitizedFunctionName(triggerPath, 'trigger_') %>(request, Parse, configWithDefaults),
       require('<%~ triggerPath %>')?.config || defaultTriggerConfig

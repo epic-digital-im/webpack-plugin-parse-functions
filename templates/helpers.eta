@@ -150,3 +150,57 @@ export type BaseServiceConfig = {
 }
 
 export type ServiceInitializer<T extends BaseServiceConfig = BaseServiceConfig> = (Parse: Parse, config?: T) => any;
+
+
+export type TriggerPayloadSchema = Parse.RestSchema['fields'];
+export type TriggerPayload = {
+  [prop in keyof TriggerPayloadSchema]?: any;
+}
+
+export type TriggerHandler<
+  C extends BaseServiceConfig
+> = (request: Parse.Cloud.FunctionRequest<ActionTrigger>, Parse: Parse, config?: C) => any;
+
+
+type TriggerValidationResult = { [key: string]: string };
+
+export async function validateTriggerPayload(
+  schema: TriggerPayloadSchema,
+  payload: TriggerPayload
+): Promise<TriggerValidationResult> {
+  const errors: TriggerValidationResult = {};
+  for (const schemaKey in schema) {
+    const fieldSchema = schema[schemaKey];
+    const val = payload[schemaKey];
+    if (fieldSchema.required && (val == null || val == '')) {
+      errors[schemaKey] = 'This field is required';
+    } else {
+      switch (fieldSchema.type) {
+        case 'Relation':
+        case 'Pointer':
+          const q = new Parse.Query(fieldSchema.targetClass);
+          const r = await q.get(val);
+          if (r == null) {
+            errors[schemaKey] = 'This field is required'
+          }
+          break;
+        case 'String':
+          if (typeof val !== 'string') {
+            errors[schemaKey] = 'Please enter a string';
+          }
+          break;
+        case 'Number':
+          if (isNaN(Number(val))) {
+            errors[schemaKey] = 'Please enter a number';
+          }
+          break;
+        case 'Date':
+          if (isNaN(+(new Date(val)))) {
+            errors[schemaKey] = 'Please enter a valid date';
+          }
+          break;
+      }
+    }
+  }
+  return errors;
+}

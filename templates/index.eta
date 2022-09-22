@@ -36,6 +36,7 @@ export type SchemaMap = {
 export type TriggerHandlerOption = {
   label: string;
   value: string;
+  parameters: { [key: string]: any };
 }
 
 export type TriggerHandlersMap = {
@@ -65,6 +66,7 @@ export const TriggerHandlers: TriggerHandlersMap = {
         {
           label: '<%~ it.helpers.getSanitizedFunctionName(trigger) %>',
           value: '<%~ it.helpers.getSanitizedFunctionName(trigger) %>',
+          parameters: require('<%~ trigger %>')?.payloadSchema || {},
         },
       <% }) %>
     ],

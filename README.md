@@ -161,4 +161,6 @@ export default initialize;
   - [x] monthly -- a cron job that fires monthly
   - [x] datetime -- a cron job that fires on a specific datetime
 - [x] Make a `processActionTriggers` function to avoid duplicate code
-- [ ] Rework functions, jobs, and triggers to export a factory function that takes a `Parse` instance as the first parameter, a configuration or context parameter, and returns a function
+- [x] Rework functions, jobs, and triggers to export a factory function that takes a `Parse` instance as the first parameter, a configuration or context parameter, and returns a function
+- [ ] Make helper types for hooks, functions, jobs, and triggers
+- [x] Make export for trigger handler parameter schema
