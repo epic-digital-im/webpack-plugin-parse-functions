@@ -3,7 +3,8 @@
 import P from 'parse';
 import { ActionTrigger, processActionTriggers, ServiceInitializer } from './helpers';
 <% if (it.service.config) { %>
-  import defaultServiceConfig, { ServiceConfig } from '<%~ it.service.config.replace(/\.ts$/, '') %>';
+  import defaultServiceConfig from '<%~ it.service.config.replace(/\.ts$/, '') %>';
+  import type { ServiceConfig } from '<%~ it.service.config.replace(/\.ts$/, '') %>';
 <% } %>
 
 <% Object.entries(it.service.hooks).forEach(([hookName, hooks]) => { %>
