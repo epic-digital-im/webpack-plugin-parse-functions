@@ -219,16 +219,17 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
       return memo;
     }, {} as ParseServiceMap);
     
+    const helpersFile = await this.makeHelpersFile(services);
+    fs.writeFileSync(path.resolve(`${this.buildPath}`, 'helpers.ts'), helpersFile);
+
     Object.entries(services).forEach(async ([serviceName, service]) => {
       const servicePath = path.resolve(this.buildPath!, `${serviceName}.ts`);
       compilation.fileDependencies.add(this.indexFilePath!);
       fs.writeFileSync(servicePath, await this.makeServiceFile(service));
     });
 
-    const helpersFile = await this.makeHelpersFile(services);
     const indexFile = await this.makeServiceIndexFile(services);
 
-    fs.writeFileSync(path.resolve(`${this.buildPath}`, 'helpers.ts'), helpersFile);
     fs.writeFileSync(this.indexFilePath!, indexFile);
 
     compilation.fileDependencies.add(this.indexFilePath!);
