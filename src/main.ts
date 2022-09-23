@@ -279,7 +279,8 @@ function getSanitizedFunctionName(filePath: string, prefix: string = ''): string
 function mapSchemaTypeToTSType(schemaField: ParseFunctionServiceSchemaField): string {
   switch(schemaField.type) {
     case ParseServiceSchemaFieldType.Relation:
-      return `Parse.Relation<${schemaField.targetClass}>`
+      return `Parse.Relation`
+      // return `Parse.Relation<${schemaField.targetClass}>`
     case ParseServiceSchemaFieldType.Pointer:
       return `Parse.Pointer`
     case ParseServiceSchemaFieldType.String:
