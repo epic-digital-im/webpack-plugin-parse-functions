@@ -60,7 +60,7 @@ export type TriggerHandlersMap = {
 /* === CONSTANTS === */
 export const Schemas: SchemaMap = {
   <% Object.values(it.services).forEach(service => { %>
-    <%~ service.className %>: <%~ JSON.stringify(service.schema, null, 2) %>
+    <%~ service.className %>: <%~ JSON.stringify(service.schema, null, 2) %>,
   <% }) %>
 };
 
