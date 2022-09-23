@@ -153,7 +153,20 @@ export type BaseServiceConfig = {
 export type ServiceInitializer<T extends BaseServiceConfig = BaseServiceConfig> = (Parse: Parse, config?: T) => any;
 
 
-export type TriggerPayloadSchema = Parse.RestSchema['fields'];
+type TriggerPayloadOption = {
+  label: string;
+  value: string;
+}
+
+type TriggerPayloadParams = {
+  type: string;
+  targetClass?: string;
+  required?: boolean;
+  defaultValue?: any;
+  options?: TriggerPayloadOption[];
+}
+
+export type TriggerPayloadSchema = { [key: string]: TriggerPayloadParams };
 export type TriggerPayload = {
   [prop in keyof TriggerPayloadSchema]?: any;
 }
