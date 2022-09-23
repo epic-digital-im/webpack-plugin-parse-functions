@@ -181,7 +181,7 @@ export type BeforeSaveHandler<T extends Parse.Object, C extends BaseServiceConfi
   config?: C
 ) => Promise<any>;
 
-export type BeforeUpdateHandler<T extends Parse.Object, C> = BeforeSaveHandler<T, C>;
+export type BeforeUpdateHandler<T extends Parse.Object, C extends BaseServiceConfig> = BeforeSaveHandler<T, C>;
 
 export type AfterSaveHandler<T extends Parse.Object, C extends BaseServiceConfig> = (
   request: Parse.Cloud.AfterSaveRequest<T>,
@@ -189,7 +189,7 @@ export type AfterSaveHandler<T extends Parse.Object, C extends BaseServiceConfig
   config?: C
 ) => Promise<any>;
 
-export type AfterUpdateHandler<T extends Parse.Object, C> = AfterSaveHandler<T, C>;
+export type AfterUpdateHandler<T extends Parse.Object, C extends BaseServiceConfig> = AfterSaveHandler<T, C>;
 
 export type BeforeDeleteHandler<T extends Parse.Object, C extends BaseServiceConfig> = (
   request: Parse.Cloud.BeforeDeleteRequest<T>,
