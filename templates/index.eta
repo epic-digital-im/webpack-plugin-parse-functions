@@ -33,10 +33,23 @@ export type SchemaMap = {
   [prop in ClassNames]: ParseFunctionServiceSchema
 }
 
+type TriggerHandlerParamsOption = {
+  label: string;
+  value: string;
+}
+
+type TriggerHandlerParams = {
+  type: string;
+  targetClass?: string;
+  required?: boolean;
+  defaultValue?: any;
+  options?: TriggerHandlerParamsOption[];
+}
+
 export type TriggerHandlerOption = {
   label: string;
   value: string;
-  parameters: Parse.RestSchema['fields'];
+  parameters: { [key: string]: TriggerHandlerParams };
 }
 
 export type TriggerHandlersMap = {
