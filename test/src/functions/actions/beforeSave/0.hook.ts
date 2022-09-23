@@ -1,5 +1,6 @@
 // import { ClassNames } from '@@functions';
-import { ServiceConfig } from '@@functions/actions';
+import { BeforeSaveHandler } from '@@functions/helpers';
+import { ActionItem, ServiceConfig } from '@@functions/actions';
 import P from 'parse';
 
 type PP = typeof P;
@@ -20,7 +21,7 @@ let aclSchema: {
   }
 }
 
-async function beforeSave(request: any, Parse: PP, config?: ServiceConfig) {
+const beforeSave: BeforeSaveHandler<ActionItem, ServiceConfig> = async (request: any, Parse: PP, config?: ServiceConfig) => {
   const object = request.object;
   // await setCmId(ClassNames.ActionItem, config)(request);
   const acl = new Parse.ACL(aclSchema);

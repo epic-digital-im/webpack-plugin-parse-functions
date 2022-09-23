@@ -175,6 +175,34 @@ export type TriggerHandler<
   C extends BaseServiceConfig
 > = (request: Parse.Cloud.FunctionRequest<ActionTrigger>, Parse: Parse, config?: C) => any;
 
+export type BeforeSaveHandler<T extends Parse.Object, C extends BaseServiceConfig> = (
+  request: Parse.Cloud.BeforeSaveRequest<T>,
+  Parse: Parse,
+  config?: C
+) => Promise<any>;
+
+export type BeforeUpdateHandler<T extends Parse.Object, C> = BeforeSaveHandler<T, C>;
+
+export type AfterSaveHandler<T extends Parse.Object, C extends BaseServiceConfig> = (
+  request: Parse.Cloud.AfterSaveRequest<T>,
+  Parse: Parse,
+  config?: C
+) => Promise<any>;
+
+export type AfterUpdateHandler<T extends Parse.Object, C> = AfterSaveHandler<T, C>;
+
+export type BeforeDeleteHandler<T extends Parse.Object, C extends BaseServiceConfig> = (
+  request: Parse.Cloud.BeforeDeleteRequest<T>,
+  Parse: Parse,
+  config?: C
+) => Promise<any>;
+
+export type AfterDeleteHandler<T extends Parse.Object, C extends BaseServiceConfig> = (
+  request: Parse.Cloud.AfterDeleteRequest<T>,
+  Parse: Parse,
+  config?: C
+) => Promise<any>;
+
 
 type TriggerValidationResult = { [key: string]: string };
 
