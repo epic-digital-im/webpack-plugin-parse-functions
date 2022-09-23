@@ -17,6 +17,7 @@ export interface ActionTriggerAttributes {
   active?: boolean;
   trigger: string;
   handler: string;
+  payload: object;
 }
 
 export type ActionTrigger = Parse.Object<ActionTriggerAttributes>;
