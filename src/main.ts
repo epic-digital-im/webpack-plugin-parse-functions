@@ -281,7 +281,7 @@ function mapSchemaTypeToTSType(schemaField: ParseFunctionServiceSchemaField): st
     case ParseServiceSchemaFieldType.Relation:
       return `Parse.Relation<${schemaField.targetClass}>`
     case ParseServiceSchemaFieldType.Pointer:
-      return `Parse.Pointer<${schemaField.targetClass}>`
+      return `Parse.Pointer`
     case ParseServiceSchemaFieldType.String:
     case ParseServiceSchemaFieldType.ACL:
       return 'string';
