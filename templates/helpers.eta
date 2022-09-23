@@ -178,7 +178,7 @@ export async function validateTriggerPayload(
       switch (fieldSchema.type) {
         case 'Relation':
         case 'Pointer':
-          const q = new Parse.Query(fieldSchema.targetClass);
+          const q = new Parse.Query(fieldSchema.targetClass!);
           const r = await q.get(val);
           if (r == null) {
             errors[schemaKey] = 'This field is required'

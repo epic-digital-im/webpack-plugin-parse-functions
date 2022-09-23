@@ -14,7 +14,9 @@ export const payloadSchema: TriggerPayloadSchema = {
 
 const doTriggerThing: TriggerHandler<ServiceConfig> = (request, Parse, config) => {
   const payload = request.params;
-  
+  const q = new Parse.Query(payload.get('objectClass'));
+  const obj = q.get(payload.get('objectId'));
+  console.log('do trigger thing', payload, obj);
 };
 
 export default doTriggerThing;
