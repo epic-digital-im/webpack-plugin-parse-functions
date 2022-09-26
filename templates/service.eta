@@ -1,7 +1,7 @@
 
 // auto-generated file for actions
 import P from 'parse';
-import { ActionTrigger, processActionTriggers, ServiceInitializer } from './helpers';
+import { ActionTrigger, processActionTriggers, ServiceInitializer, TriggerCloudRequestHandler } from './helpers';
 <% if (it.service.config) { %>
   import defaultServiceConfig from '<%~ it.service.config.replace(/\.ts$/, '') %>';
   import type { ServiceConfig } from '<%~ it.service.config.replace(/\.ts$/, '') %>';
@@ -86,9 +86,9 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
           <% } %>
         <% } %>
 
-        await processActionTriggers<<%~ it.service.className %>>(Parse, {
+        await processActionTriggers(Parse, {
           object: request.object,
-          triggerName: '<%~ hookName %>',
+          triggerType: '<%~ hookName %>',
         });
       }<% if (hooks.config) { %>, <%~ it.helpers.getSanitizedFunctionName(hooks.config, `hook_${hookName}_`) %><% } %>);
     <% } %>
@@ -206,9 +206,16 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
   
   // TRIGGER HANDLERS
   <% it.service.triggers.forEach((triggerPath) => { %>
-    Parse.Cloud.define<(params: ActionTrigger) => any>(
+    Parse.Cloud.define<TriggerCloudRequestHandler>(
       '<%~ it.helpers.getSanitizedFunctionName(triggerPath) %>',
-      (request) => <%~ it.helpers.getSanitizedFunctionName(triggerPath, 'trigger_') %>(request, Parse, configWithDefaults),
+      async (request) => {
+        const { triggerId } = request.params;
+        const triggerQ = new Parse.Query<ActionTrigger>('ActionTrigger');
+        const trigger = await triggerQ.get(triggerId);
+        const q = new Parse.Query(trigger.get('objectClass'));
+        const object = await q.get(trigger.get('objectId'));
+        return <%~ it.helpers.getSanitizedFunctionName(triggerPath, 'trigger_') %>({ params: { trigger, object } }, Parse, configWithDefaults)
+      },
       require('<%~ triggerPath %>')?.config || defaultTriggerConfig
     );
   <% }) %>

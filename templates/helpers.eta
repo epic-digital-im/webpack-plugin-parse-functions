@@ -1,16 +1,15 @@
-import P from 'parse';
+import P from "parse";
 
 type Parse = typeof P;
 
-
 export interface ActionTriggerAttributes {
   id: string;
+  objectClass: string;
   objectId: string;
   createdAt: Date;
   updatedAt: Date;
   name?: string;
   type?: string;
-  objectClass: string;
   condition: string;
   property?: string;
   value?: string;
@@ -22,88 +21,74 @@ export interface ActionTriggerAttributes {
 
 export type ActionTrigger = Parse.Object<ActionTriggerAttributes>;
 
-export enum ActionCondition {
-  Exists = 'exists',
-  DoesNotExist = 'does not exist',
-  Equals = 'equals',
-  Contains = 'contains',
-  StartsWith = 'startsWith',
-  EndsWith = 'endsWith',
-  LessThan = 'lessThan',
-  LessThanOrEqualTo = 'lessThanOrEqualTo',
-  GreaterThan = 'greaterThan',
-  GreaterThanOrEqualTo = 'greaterThanOrEqualTo',
-  Unique = 'unique',
-  NotUnique = 'not unique',
+export enum ActionTriggerCondition {
+  Exists = "exists",
+  DoesNotExist = "does not exist",
+  Equals = "equals",
+  Contains = "contains",
+  StartsWith = "startsWith",
+  EndsWith = "endsWith",
+  LessThan = "lessThan",
+  LessThanOrEqualTo = "lessThanOrEqualTo",
+  GreaterThan = "greaterThan",
+  GreaterThanOrEqualTo = "greaterThanOrEqualTo",
+  Unique = "unique",
+  NotUnique = "not unique",
 }
 
-export async function testTriggerCondition<T extends Parse.Object = Parse.Object>(trigger: ActionTrigger, obj: T): Promise<string | undefined> {
-  const condition = trigger.get('condition') as ActionCondition | undefined;
-  const property = trigger.get('property');
-  const value = trigger.get('value');
+export async function testTriggerCondition<T extends Parse.Object = Parse.Object>(
+  trigger: ActionTrigger,
+  obj: T
+): Promise<string | undefined> {
+  const condition = trigger.get("condition") as ActionTriggerCondition | undefined;
+  const property = trigger.get("property");
+  const value = trigger.get("value");
   if (condition == null || property == null) return;
-  
+
   const propertyValue = obj.get(property);
   const n1 = Number(propertyValue);
   const n2 = Number(value);
   const q = new Parse.Query(obj.className).equalTo(property, propertyValue);
 
   switch (condition) {
-    case ActionCondition.Exists:
-      return value != null
-        ? undefined
-        : `Property '${property}' does not exist`;
-    case ActionCondition.DoesNotExist:
-      return value == null
-        ? undefined
-        : `Property '${property}' exists (and should not)`;
-    case ActionCondition.Contains:
-      return !!(propertyValue?.includes(value))
+    case ActionTriggerCondition.Exists:
+      return value != null ? undefined : `Property '${property}' does not exist`;
+    case ActionTriggerCondition.DoesNotExist:
+      return value == null ? undefined : `Property '${property}' exists (and should not)`;
+    case ActionTriggerCondition.Contains:
+      return !!propertyValue?.includes(value)
         ? undefined
         : `Property '${property}' does not contain value '${value}'`;
-    case ActionCondition.Equals:
-      return value === propertyValue
+    case ActionTriggerCondition.Equals:
+      return value === propertyValue ? undefined : `Property '${property}' does not equal value '${value}`;
+    case ActionTriggerCondition.StartsWith:
+      return propertyValue?.indexOf(value) === 0
         ? undefined
-        : `Property '${property}' does not equal value '${value}`;
-    case ActionCondition.StartsWith:
-      return (propertyValue?.indexOf(value) === 0)
-        ? undefined
-        : `Property '${property}' does not start with value '${value}'`
-    case ActionCondition.EndsWith:
-      const endsWith = propertyValue && value
-        ? propertyValue.indexOf(value) === propertyValue.length - value.length
-        : false;
-      return endsWith
-        ? undefined
-        : `Property '${property}' does not end with value '${value}'`;
-    case ActionCondition.LessThan:
-      const isLessThan = !isNaN(n1) && !isNaN(n2)
-        ? n1 < n2
-        : false;
-      return isLessThan
-        ? undefined
-        : `Property '${property}' `;
-    case ActionCondition.LessThanOrEqualTo:
+        : `Property '${property}' does not start with value '${value}'`;
+    case ActionTriggerCondition.EndsWith:
+      const endsWith =
+        propertyValue && value ? propertyValue.indexOf(value) === propertyValue.length - value.length : false;
+      return endsWith ? undefined : `Property '${property}' does not end with value '${value}'`;
+    case ActionTriggerCondition.LessThan:
+      const isLessThan = !isNaN(n1) && !isNaN(n2) ? n1 < n2 : false;
+      return isLessThan ? undefined : `Property '${property}' `;
+    case ActionTriggerCondition.LessThanOrEqualTo:
       const isLessThanOrEqualTo = !isNaN(n1) && !isNaN(n2) ? n1 <= n2 : false;
       return isLessThanOrEqualTo
         ? undefined
         : `Property '${property}' is not less than or equal to value '${value}'`;
-    case ActionCondition.GreaterThan:
+    case ActionTriggerCondition.GreaterThan:
       const isGreaterThan = !isNaN(n1) && !isNaN(n2) ? n1 > n2 : false;
-      return isGreaterThan
-        ? undefined
-        : `Property '${property}' is not greater than value '${value}'`;
-    case ActionCondition.GreaterThanOrEqualTo:
+      return isGreaterThan ? undefined : `Property '${property}' is not greater than value '${value}'`;
+    case ActionTriggerCondition.GreaterThanOrEqualTo:
       const isGreaterThanOrEqualTo = !isNaN(n1) && !isNaN(n2) ? n1 >= n2 : false;
       return isGreaterThanOrEqualTo
         ? undefined
         : `Property '${property}' is not greater than or equal to value '${value}'`;
-    case ActionCondition.Unique:
+    case ActionTriggerCondition.Unique:
       const res1 = await q.findAll({ useMasterKey: true });
-      return res1.length === 0
-        ? undefined
-        : `Property '${property}' is not unique, with value '${value}'`;
-    case ActionCondition.NotUnique:
+      return res1.length === 0 ? undefined : `Property '${property}' is not unique, with value '${value}'`;
+    case ActionTriggerCondition.NotUnique:
       const res2 = await q.findAll({ useMasterKey: true });
       return res2.length > 0
         ? undefined
@@ -111,30 +96,53 @@ export async function testTriggerCondition<T extends Parse.Object = Parse.Object
   }
 }
 
-
-interface ProcessActionTriggerParams<T extends Parse.Object = Parse.Object> {
-  object: T;
-  triggerName: string;
+interface ParseObjectReference {
+  id: string;
+  className: string;
 }
 
-export async function processActionTriggers<T extends Parse.Object = Parse.Object>(Parse: Parse, params: ProcessActionTriggerParams<T>) {
-  const { triggerName, object } = params;
-  const actionTriggerQuery = new Parse.Query<ActionTrigger>('ActionTrigger')
-    .equalTo('active', true)
-    .equalTo('objectClass', object.className)
-    .equalTo('trigger', triggerName);
+interface ProcessActionTriggerParams {
+  object: ParseObjectReference;
+  triggerType: string;
+}
+
+
+export type TriggerCloudRequest = {
+  triggerId: string;
+  object: ParseObjectReference;
+}
+
+export type TriggerCloudRequestHandler = (params: TriggerCloudRequest) => any;
+
+
+export async function processActionTriggers(
+  Parse: Parse,
+  params: ProcessActionTriggerParams
+) {
+  const { triggerType, object } = params;
+  const actionTriggerQuery = new Parse.Query<ActionTrigger>("ActionTrigger")
+    .equalTo("active", true)
+    .equalTo("objectClass", object.className)
+    .equalTo("trigger", triggerType);
   const triggers = await actionTriggerQuery.findAll();
-  
+  const obj = await (new Parse.Query(object.className)).get(object.id);
+
   for (const trigger of triggers) {
-    const conditionMessage = await testTriggerCondition(trigger, object);
-    
+    const conditionMessage = await testTriggerCondition(trigger, obj);
+
     if (conditionMessage != null) {
       // console.warn('[ACTION TRIGGER]', conditionMessage);
       continue;
     }
 
-    const handler = trigger.get('handler');
-    await Parse.Cloud.run(handler, object);
+    const handler = trigger.get("handler");
+    await Parse.Cloud.run<TriggerCloudRequestHandler>(handler, {
+      triggerId: trigger.id,
+      object: {
+        id: obj.id,
+        className: obj.className,
+      },
+    });
   }
 }
 
@@ -142,21 +150,23 @@ type ACLSchema = {
   [key: string]: {
     read?: boolean;
     write?: boolean;
-  }
-}
+  };
+};
 
 export type BaseServiceConfig = {
-  aclSchema?: ACLSchema,
+  aclSchema?: ACLSchema;
   [key: string]: any;
-}
+};
 
-export type ServiceInitializer<T extends BaseServiceConfig = BaseServiceConfig> = (Parse: Parse, config?: T) => any;
-
+export type ServiceInitializer<T extends BaseServiceConfig = BaseServiceConfig> = (
+  Parse: Parse,
+  config?: T
+) => any;
 
 type TriggerPayloadOption = {
   label: string;
   value: string;
-}
+};
 
 type TriggerPayloadParams = {
   type: string;
@@ -164,16 +174,23 @@ type TriggerPayloadParams = {
   required?: boolean;
   defaultValue?: any;
   options?: TriggerPayloadOption[];
-}
+};
 
 export type TriggerPayloadSchema = { [key: string]: TriggerPayloadParams };
 export type TriggerPayload = {
   [prop in keyof TriggerPayloadSchema]?: any;
+};
+
+export type TriggerHandlerPayload<T extends Parse.Object = Parse.Object> = {
+  trigger: ActionTrigger;
+  object: T;
 }
 
-export type TriggerHandler<
-  C extends BaseServiceConfig
-> = (request: Parse.Cloud.FunctionRequest<ActionTrigger>, Parse: Parse, config?: C) => any;
+export type TriggerHandler<C extends BaseServiceConfig> = (
+  request: Parse.Cloud.FunctionRequest<TriggerHandlerPayload>,
+  Parse: Parse,
+  config?: C
+) => any;
 
 export type BeforeSaveHandler<T extends Parse.Object, C extends BaseServiceConfig> = (
   request: Parse.Cloud.BeforeSaveRequest<T>,
@@ -203,7 +220,6 @@ export type AfterDeleteHandler<T extends Parse.Object, C extends BaseServiceConf
   config?: C
 ) => Promise<any>;
 
-
 type TriggerValidationResult = { [key: string]: string };
 
 export async function validateTriggerPayload(
@@ -214,31 +230,31 @@ export async function validateTriggerPayload(
   for (const schemaKey in schema) {
     const fieldSchema = schema[schemaKey];
     const val = payload[schemaKey];
-    if (fieldSchema.required && (val == null || val == '')) {
-      errors[schemaKey] = 'This field is required';
+    if (fieldSchema.required && (val == null || val == "")) {
+      errors[schemaKey] = "This field is required";
     } else {
       switch (fieldSchema.type) {
-        case 'Relation':
-        case 'Pointer':
+        case "Relation":
+        case "Pointer":
           const q = new Parse.Query(fieldSchema.targetClass!);
           const r = await q.get(val);
           if (r == null) {
-            errors[schemaKey] = 'This field is required'
+            errors[schemaKey] = "This field is required";
           }
           break;
-        case 'String':
-          if (typeof val !== 'string') {
-            errors[schemaKey] = 'Please enter a string';
+        case "String":
+          if (typeof val !== "string") {
+            errors[schemaKey] = "Please enter a string";
           }
           break;
-        case 'Number':
+        case "Number":
           if (isNaN(Number(val))) {
-            errors[schemaKey] = 'Please enter a number';
+            errors[schemaKey] = "Please enter a number";
           }
           break;
-        case 'Date':
-          if (isNaN(+(new Date(val)))) {
-            errors[schemaKey] = 'Please enter a valid date';
+        case "Date":
+          if (isNaN(+new Date(val))) {
+            errors[schemaKey] = "Please enter a valid date";
           }
           break;
       }
