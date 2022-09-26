@@ -12,8 +12,8 @@ export const payloadSchema: TriggerPayloadSchema = {
   }
 };
 
-const doTriggerThing: TriggerHandler<ServiceConfig> = async (request, Parse, config) => {
-  const { trigger, object } = request.params;
+const doTriggerThing: TriggerHandler<ServiceConfig> = async (request, trigger, Parse, config) => {
+  const { object } = request;
   console.log('do trigger thing', trigger, object);
 };
 

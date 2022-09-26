@@ -1,7 +1,7 @@
 
 // auto-generated file for actions
 import P from 'parse';
-import { ActionTrigger, processActionTriggers, ServiceInitializer, TriggerCloudRequestHandler } from './helpers';
+import { ActionTrigger, processActionTriggers, ServiceInitializer, TriggerCloudRequestHandler, TriggerHandlerRegistry } from './helpers';
 <% if (it.service.config) { %>
   import defaultServiceConfig from '<%~ it.service.config.replace(/\.ts$/, '') %>';
   import type { ServiceConfig } from '<%~ it.service.config.replace(/\.ts$/, '') %>';
@@ -86,10 +86,7 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
           <% } %>
         <% } %>
 
-        await processActionTriggers(Parse, {
-          object: request.object,
-          triggerType: '<%~ hookName %>',
-        });
+        await processActionTriggers(TriggerHandlers, '<%~ hookName %>', request, Parse, configWithDefaults);
       }<% if (hooks.config) { %>, <%~ it.helpers.getSanitizedFunctionName(hooks.config, `hook_${hookName}_`) %><% } %>);
     <% } %>
     
@@ -189,20 +186,11 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
   <% }) %>
   
   // TRIGGER HANDLERS
+  const TriggerHandlers: TriggerHandlerRegistry<ServiceConfig> = {
   <% it.service.triggers.forEach((triggerPath) => { %>
-    Parse.Cloud.define<TriggerCloudRequestHandler>(
-      '<%~ it.helpers.getSanitizedFunctionName(triggerPath) %>',
-      async (request) => {
-        const { triggerId, object: obj } = request.params;
-        const triggerQ = new Parse.Query<ActionTrigger>("ActionTrigger");
-        const trigger = await triggerQ.get(triggerId);
-        const q = new Parse.Query(obj.className);
-        const object = await q.get(obj.id);
-        return <%~ it.helpers.getSanitizedFunctionName(triggerPath, 'trigger_') %>({ params: { trigger, object } }, Parse, configWithDefaults)
-      },
-      require('<%~ triggerPath %>')?.config || defaultTriggerConfig
-    );
+    '<%~ it.helpers.getSanitizedFunctionName(triggerPath) %>': <%~ it.helpers.getSanitizedFunctionName(triggerPath, 'trigger_') %>,
   <% }) %>
+  };
 };
 
 export default service;

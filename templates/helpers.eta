@@ -3,8 +3,14 @@ import P from "parse";
 type Parse = typeof P;
 
 /* === HELPERS === */
-export async function processActionTriggers(Parse: Parse, params: ProcessActionTriggerParams) {
-  const { triggerType, object } = params;
+export async function processActionTriggers<C extends BaseServiceConfig>(
+  registry: TriggerHandlerRegistry<C>,
+  triggerType: string,
+  request: TriggerHandlerRequest,
+  Parse: Parse,
+  config?: C,
+) {
+  const { object } = request;
   const actionTriggerQuery = new Parse.Query<ActionTrigger>("ActionTrigger")
     .equalTo("active", true)
     .equalTo("objectClass", object.className)
@@ -20,17 +26,13 @@ export async function processActionTriggers(Parse: Parse, params: ProcessActionT
       continue;
     }
 
-    const handler = trigger.get("handler");
-    await Parse.Cloud.run<TriggerCloudRequestHandler>(handler, {
-      triggerId: trigger.id,
-      object: {
-        id: obj.id,
-        className: obj.className,
-      },
-    });
+    const handlerName = trigger.get("handler");
+    const handler = registry[handlerName];
+    if (handler == null) continue;
+
+    await handler(request, trigger, Parse, config);
   }
 }
-
 
 export async function testTriggerCondition<T extends Parse.Object = Parse.Object>(
   trigger: ActionTrigger,
@@ -91,7 +93,6 @@ export async function testTriggerCondition<T extends Parse.Object = Parse.Object
         : `Property '${property}' is unique (and should not be), with value '${value}'`;
   }
 }
-
 
 export async function validateTriggerPayload(
   schema: TriggerPayloadSchema,
@@ -158,6 +159,7 @@ export type ServiceInitializer<T extends BaseServiceConfig = BaseServiceConfig> 
 ) => any;
 
 
+
 /* === TRIGGER TYPES === */
 export interface ActionTriggerAttributes {
   id: string;
@@ -193,10 +195,6 @@ export enum ActionTriggerCondition {
   NotUnique = "not unique",
 }
 
-interface ProcessActionTriggerParams {
-  object: ParseObjectReference;
-  triggerType: string;
-}
 
 export type TriggerCloudRequest = {
   triggerId: string;
@@ -223,19 +221,24 @@ export type TriggerPayload = {
   [prop in keyof TriggerPayloadSchema]?: any;
 };
 
-export type TriggerHandlerPayload<T extends Parse.Object = Parse.Object> = {
-  trigger: ActionTrigger;
-  object: T;
-};
+
+type TriggerHandlerRequest = Parse.Cloud.BeforeSaveRequest
+  | Parse.Cloud.AfterSaveRequest
+  | Parse.Cloud.BeforeDeleteRequest
+  | Parse.Cloud.AfterDeleteRequest
 
 export type TriggerHandler<C extends BaseServiceConfig> = (
-  request: Parse.Cloud.FunctionRequest<TriggerHandlerPayload>,
+  request:  TriggerHandlerRequest,
+  trigger: ActionTrigger,
   Parse: Parse,
   config?: C
 ) => any;
 
-type TriggerValidationResult = { [key: string]: string };
+export type TriggerHandlerRegistry<C extends BaseServiceConfig> = {
+  [key: string]: TriggerHandler<C>;
+};
 
+type TriggerValidationResult = { [key: string]: string };
 
 /* === HOOK TYPES === */
 export type BeforeSaveHandler<T extends Parse.Object, C extends BaseServiceConfig> = (
@@ -247,7 +250,6 @@ export type BeforeSaveHandler<T extends Parse.Object, C extends BaseServiceConfi
 export type BeforeCreateHandler<T extends Parse.Object, C extends BaseServiceConfig> = BeforeSaveHandler<T, C>;
 export type BeforeUpdateHandler<T extends Parse.Object, C extends BaseServiceConfig> = BeforeSaveHandler<T, C>;
 
-
 export type AfterSaveHandler<T extends Parse.Object, C extends BaseServiceConfig> = (
   request: Parse.Cloud.AfterSaveRequest<T>,
   Parse: Parse,
@@ -256,7 +258,6 @@ export type AfterSaveHandler<T extends Parse.Object, C extends BaseServiceConfig
 
 export type AfterCreateHandler<T extends Parse.Object, C extends BaseServiceConfig> = AfterSaveHandler<T, C>;
 export type AfterUpdateHandler<T extends Parse.Object, C extends BaseServiceConfig> = AfterSaveHandler<T, C>;
-
 
 export type BeforeDeleteHandler<T extends Parse.Object, C extends BaseServiceConfig> = (
   request: Parse.Cloud.BeforeDeleteRequest<T>,
