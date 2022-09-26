@@ -82,7 +82,7 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
         <% for (const subhookName of subhooks) { %>
           <% const subhook = it.service.hooks[subhookName] %>
           <% if (subhook && subhook.hooks.length) { %>
-            Parse.Cloud.run('<%~ it.service.className%>_<%~ subhookName %>', request);
+            await <%~ it.service.className %>_<%~ subhookName %>(request, configWithDefaults);
           <% } %>
         <% } %>
 
@@ -99,73 +99,57 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
   <% if (it.service.hooks[it.helpers.AdditionalHookNames.beforeCreate].hooks.length) { %>
     <% const hookName = it.helpers.AdditionalHookNames.beforeCreate; %>
     <% const hook = it.service.hooks[it.helpers.AdditionalHookNames.beforeCreate]; %>
-    Parse.Cloud.define<(params: <%~ it.service.className %>) => Promise<any>>(
-      '<%~ it.service.className %>_<%~ hookName %>',
-      async (request) => {
-        const object = request.params;
-        if (!object.isNew()) return;
-        <% if (hook && hook.hooks.length > 0) { %>
-          <% for (h of hook.hooks) { %>
-            await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
-          <% } %>
+    const <%~ it.service.className %>_<%~ hookName %> = async (request: Parse.Cloud.BeforeSaveRequest<<%~ it.service.className %>>, config: ServiceConfig) => {
+      const object = request.object;
+      if (!object.isNew()) return;
+      <% if (hook && hook.hooks.length > 0) { %>
+        <% for (h of hook.hooks) { %>
+          await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
         <% } %>
-      },
-      <% if (hook.config) { %>, <%~ it.helpers.getSanitizedFunctionName(hook.config, `hook_${hookName}_`) %><% } %>
-    );
+      <% } %>
+    };
   <% } %>
   
   <% if (it.service.hooks[it.helpers.AdditionalHookNames.afterCreate].hooks.length) { %>
     <% const hookName = it.helpers.AdditionalHookNames.afterCreate; %>
     <% const hook = it.service.hooks[it.helpers.AdditionalHookNames.afterCreate]; %>
-    Parse.Cloud.define<(params: <%~ it.service.className %>) => Promise<any>>(
-      '<%~ it.service.className %>_<%~ hookName %>',
-      async (request) => {
-        const object = request.params;
-        if (!object.isNew()) return;
-        <% if (hook && hook.hooks.length > 0) { %>
-          <% for (h of hook.hooks) { %>
-            await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, configWithDefaults, Parse);
-          <% } %>
+    const <%~ it.service.className %>_<%~ hookName %> = async (request: Parse.Cloud.AfterSaveRequest<<%~ it.service.className %>>, config: ServiceConfig) => {
+      const object = request.object;
+      if (!object.isNew()) return;
+      <% if (hook && hook.hooks.length > 0) { %>
+        <% for (h of hook.hooks) { %>
+          await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, configWithDefaults, Parse);
         <% } %>
-      },
-      <% if (hook.config) { %>, <%~ it.helpers.getSanitizedFunctionName(hook.config, `hook_${hookName}_`) %><% } %>
-    );
+      <% } %>
+    };
   <% } %>
   
   <% if (it.service.hooks[it.helpers.AdditionalHookNames.beforeUpdate].hooks.length) { %>
     <% const hookName = it.helpers.AdditionalHookNames.beforeUpdate; %>
     <% const hook = it.service.hooks[it.helpers.AdditionalHookNames.beforeUpdate]; %>
-    Parse.Cloud.define<(params: <%~ it.service.className %>) => Promise<any>>(
-      '<%~ it.service.className %>_<%~ hookName %>',
-      async (request) => {
-        const object = request.params;
-        if (object.isNew()) return;
-        <% if (hook && hook.hooks.length > 0) { %>
-          <% for (h of hook.hooks) { %>
-            await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
-          <% } %>
+    const <%~ it.service.className %>_<%~ hookName %> = async (request: Parse.Cloud.BeforeSaveRequest<<%~ it.service.className %>>, config: ServiceConfig) => {
+      const object = request.object;
+      if (object.isNew()) return;
+      <% if (hook && hook.hooks.length > 0) { %>
+        <% for (h of hook.hooks) { %>
+          await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
         <% } %>
-      },
-      <% if (hook.config) { %>, <%~ it.helpers.getSanitizedFunctionName(hook.config, `hook_${hookName}_`) %><% } %>
-    );
+      <% } %>
+    };
   <% } %>
   
   <% if (it.service.hooks[it.helpers.AdditionalHookNames.afterUpdate].hooks.length) { %>
     <% const hookName = it.helpers.AdditionalHookNames.afterUpdate; %>
     <% const hook = it.service.hooks[it.helpers.AdditionalHookNames.afterUpdate]; %>
-    Parse.Cloud.define<(params: <%~ it.service.className %>) => Promise<any>>(
-      '<%~ it.service.className %>_<%~ hookName %>',
-      async (request) => {
-        const object = request.params;
-        if (object.isNew()) return;
-        <% if (hook && hook.hooks.length > 0) { %>
-          <% for (h of hook.hooks) { %>
-            await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
-          <% } %>
+    const <%~ it.service.className %>_<%~ hookName %> = async (request: Parse.Cloud.AfterSaveRequest<<%~ it.service.className %>>, config: ServiceConfig) => {
+      const object = request.object;
+      if (object.isNew()) return;
+      <% if (hook && hook.hooks.length > 0) { %>
+        <% for (h of hook.hooks) { %>
+          await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
         <% } %>
-      },
-      <% if (hook.config) { %>, <%~ it.helpers.getSanitizedFunctionName(hook.config, `hook_${hookName}_`) %><% } %>
-    );
+      <% } %>
+    };
   <% } %>
   
   // CRON HOOKS
@@ -209,11 +193,11 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
     Parse.Cloud.define<TriggerCloudRequestHandler>(
       '<%~ it.helpers.getSanitizedFunctionName(triggerPath) %>',
       async (request) => {
-        const { triggerId } = request.params;
-        const triggerQ = new Parse.Query<ActionTrigger>('ActionTrigger');
+        const { triggerId, object: obj } = request.params;
+        const triggerQ = new Parse.Query<ActionTrigger>("ActionTrigger");
         const trigger = await triggerQ.get(triggerId);
-        const q = new Parse.Query(trigger.get('objectClass'));
-        const object = await q.get(trigger.get('objectId'));
+        const q = new Parse.Query(obj.className);
+        const object = await q.get(obj.id);
         return <%~ it.helpers.getSanitizedFunctionName(triggerPath, 'trigger_') %>({ params: { trigger, object } }, Parse, configWithDefaults)
       },
       require('<%~ triggerPath %>')?.config || defaultTriggerConfig

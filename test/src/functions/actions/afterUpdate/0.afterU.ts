@@ -1,10 +1,11 @@
-import { ServiceConfig } from '@@functions/actions';
+import { AfterUpdateHandler } from '@@functions/helpers';
+import { ServiceConfig, ActionItem } from '@@functions/actions';
 import P from 'parse';
 
 type PP = typeof P;
 
-const afterU = (request: any, Parse: PP, config?: ServiceConfig) => {
-
+const afterU: AfterUpdateHandler<ActionItem, ServiceConfig> = async (request, Parse, config) => {
+  
 };
 
 export default afterU;

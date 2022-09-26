@@ -1,9 +1,7 @@
-import { ServiceConfig } from '@@functions/actions';
-import P from 'parse';
+import { ServiceConfig, ActionItem } from '@@functions/actions';
+import { BeforeCreateHandler } from '@@functions/helpers';
 
-type PP = typeof P;
-
-const beforeCreateHook = (request: any, Parse: PP, config?: ServiceConfig) => {
+const beforeCreateHook: BeforeCreateHandler<ActionItem, ServiceConfig> = async (request, Parse, config) => {
 
 };
 
