@@ -8,7 +8,7 @@ export async function processActionTriggers<C extends BaseServiceConfig>(
   triggerType: string,
   request: TriggerHandlerRequest,
   Parse: Parse,
-  config?: C,
+  config?: C
 ) {
   const { object } = request;
   const actionTriggerQuery = new Parse.Query<ActionTrigger>("ActionTrigger")
@@ -16,10 +16,9 @@ export async function processActionTriggers<C extends BaseServiceConfig>(
     .equalTo("objectClass", object.className)
     .equalTo("trigger", triggerType);
   const triggers = await actionTriggerQuery.findAll();
-  const obj = await new Parse.Query(object.className).get(object.id);
 
   for (const trigger of triggers) {
-    const conditionMessage = await testTriggerCondition(trigger, obj);
+    const conditionMessage = await testTriggerCondition(trigger, object);
 
     if (conditionMessage != null) {
       // console.warn('[ACTION TRIGGER]', conditionMessage);
@@ -158,8 +157,6 @@ export type ServiceInitializer<T extends BaseServiceConfig = BaseServiceConfig> 
   config?: T
 ) => any;
 
-
-
 /* === TRIGGER TYPES === */
 export interface ActionTriggerAttributes {
   id: string;
@@ -195,7 +192,6 @@ export enum ActionTriggerCondition {
   NotUnique = "not unique",
 }
 
-
 export type TriggerCloudRequest = {
   triggerId: string;
   object: ParseObjectReference;
@@ -221,14 +217,14 @@ export type TriggerPayload = {
   [prop in keyof TriggerPayloadSchema]?: any;
 };
 
-
-type TriggerHandlerRequest = Parse.Cloud.BeforeSaveRequest
+type TriggerHandlerRequest =
+  | Parse.Cloud.BeforeSaveRequest
   | Parse.Cloud.AfterSaveRequest
   | Parse.Cloud.BeforeDeleteRequest
-  | Parse.Cloud.AfterDeleteRequest
+  | Parse.Cloud.AfterDeleteRequest;
 
 export type TriggerHandler<C extends BaseServiceConfig> = (
-  request:  TriggerHandlerRequest,
+  request: TriggerHandlerRequest,
   trigger: ActionTrigger,
   Parse: Parse,
   config?: C
