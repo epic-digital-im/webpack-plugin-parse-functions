@@ -15,7 +15,7 @@ export async function processActionTriggers<C extends BaseServiceConfig>(
     .equalTo("active", true)
     .equalTo("objectClass", object.className)
     .equalTo("trigger", triggerType);
-  const triggers = await actionTriggerQuery.findAll();
+  const triggers = await actionTriggerQuery.findAll({ useMasterKey: true });
 
   for (const trigger of triggers) {
     const conditionMessage = await testTriggerCondition(trigger, object);
