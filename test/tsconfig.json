@@ -5,10 +5,14 @@
     "module": "es6",
     "target": "es5",
     "allowJs": true,
+    "types": [
+      "@types/jest"
+    ],
     "paths": {
       "@@functions": ["./src/functions/.build/index.ts"],
       "@@functions/*": ["./src/functions/.build/*"]
     }
   },
-  "files": ["src/index.ts"]
+  "files": ["src/index.ts"],
+  "include": ["tests"]
 }
