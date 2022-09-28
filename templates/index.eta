@@ -1,4 +1,5 @@
 import type P from 'parse';
+import { registerParseInstance } from './helpers';
 <% Object.entries(it.services).forEach(([serviceName, service]) => { %>
   import <%~ serviceName %><% if (service.config) { %>, { ServiceConfig as <%~ service.className %>ServiceConfig } <% } %> from './<%~ serviceName %>';
 <% }) %>
@@ -89,6 +90,7 @@ export const TriggerHandlers: TriggerHandlersMap = {
 
 /* === INITIALIZER === */
 const initialize = (Parse: ParseType, config?: ParseFunctionConfig) => {
+  registerParseInstance(Parse);
   <% Object.entries(it.services).forEach(([serviceName, service]) => { %>
   <%~ serviceName %>(Parse<% if (service.config) { %>, config?.<%~ serviceName %> <% } %>);
   <% }) %>

@@ -1,13 +1,19 @@
-import P from "parse";
+import * as P from "parse";
 
-type Parse = typeof P;
+type ParseType = typeof P;
+
+let Parse = P;
+
+export const registerParseInstance = (p: ParseType) => {
+  Parse = p;
+};
 
 /* === HELPERS === */
 export async function processActionTriggers<C extends BaseServiceConfig>(
   registry: TriggerHandlerRegistry<C>,
   triggerType: string,
   request: TriggerHandlerRequest,
-  Parse: Parse,
+  Parse: ParseType,
   config?: C
 ) {
   const { object } = request;
@@ -66,9 +72,10 @@ export const TriggerConditionMessages = {
 function interpolateTriggerConditionMessage(message: ActionTriggerCondition, prop: string, val?: any) {
   const m = TriggerConditionMessages[message];
   return val
-    ? m.replace(new RegExp(`{{\s*prop\s*}}`, 'gi'), prop)
-       .replace(new RegExp(`{{\s*val\s*}}`, 'gi'), val.toString())
-    : m.replace(new RegExp(`{{\s*prop\s*}}`, 'gi'), prop);
+    ? m
+        .replace(new RegExp(`{{\s*prop\s*}}`, "gi"), prop)
+        .replace(new RegExp(`{{\s*val\s*}}`, "gi"), val.toString())
+    : m.replace(new RegExp(`{{\s*prop\s*}}`, "gi"), prop);
 }
 
 export async function testTriggerCondition<T extends Parse.Object = Parse.Object>(
@@ -88,20 +95,18 @@ export async function testTriggerCondition<T extends Parse.Object = Parse.Object
 
   switch (condition) {
     case ActionTriggerCondition.Exists:
-      return value != null
-        ? undefined : message;
+      return propertyValue != null ? undefined : message;
     case ActionTriggerCondition.DoesNotExist:
-      return value == null ? undefined : message;
+      return propertyValue == null ? undefined : message;
     case ActionTriggerCondition.Contains:
       return !!propertyValue?.includes(value) ? undefined : message;
     case ActionTriggerCondition.Equals:
       return value === propertyValue ? undefined : message;
     case ActionTriggerCondition.StartsWith:
-      return propertyValue?.indexOf(value) === 0
-        ? undefined : message;
+      return propertyValue?.indexOf(value) === 0 ? undefined : message;
     case ActionTriggerCondition.EndsWith:
       const endsWith =
-        propertyValue && value ? propertyValue.indexOf(value) === propertyValue.length - value.length : false;
+        propertyValue && value ? propertyValue.indexOf(value) === propertyValue.length - value.toString().length : false;
       return endsWith ? undefined : message;
     case ActionTriggerCondition.LessThan:
       const isLessThan = !isNaN(n1) && !isNaN(n2) ? n1 < n2 : false;
@@ -184,7 +189,7 @@ export type BaseServiceConfig = {
 };
 
 export type ServiceInitializer<T extends BaseServiceConfig = BaseServiceConfig> = (
-  Parse: Parse,
+  Parse: ParseType,
   config?: T
 ) => any;
 
@@ -199,7 +204,7 @@ export interface ActionTriggerAttributes {
   type?: string;
   condition: string;
   property?: string;
-  value?: string;
+  value?: string | number | string[] | number[] | object;
   active?: boolean;
   trigger: string;
   handler: string;
@@ -242,7 +247,7 @@ type TriggerHandlerRequest =
 export type TriggerHandler<C extends BaseServiceConfig> = (
   request: TriggerHandlerRequest,
   trigger: ActionTrigger,
-  Parse: Parse,
+  Parse: ParseType,
   config?: C
 ) => any;
 
@@ -255,7 +260,7 @@ type TriggerValidationResult = { [key: string]: string };
 /* === HOOK TYPES === */
 export type BeforeSaveHandler<T extends Parse.Object, C extends BaseServiceConfig> = (
   request: Parse.Cloud.BeforeSaveRequest<T>,
-  Parse: Parse,
+  Parse: ParseType,
   config?: C
 ) => Promise<any>;
 
@@ -264,7 +269,7 @@ export type BeforeUpdateHandler<T extends Parse.Object, C extends BaseServiceCon
 
 export type AfterSaveHandler<T extends Parse.Object, C extends BaseServiceConfig> = (
   request: Parse.Cloud.AfterSaveRequest<T>,
-  Parse: Parse,
+  Parse: ParseType,
   config?: C
 ) => Promise<any>;
 
@@ -273,12 +278,12 @@ export type AfterUpdateHandler<T extends Parse.Object, C extends BaseServiceConf
 
 export type BeforeDeleteHandler<T extends Parse.Object, C extends BaseServiceConfig> = (
   request: Parse.Cloud.BeforeDeleteRequest<T>,
-  Parse: Parse,
+  Parse: ParseType,
   config?: C
 ) => Promise<any>;
 
 export type AfterDeleteHandler<T extends Parse.Object, C extends BaseServiceConfig> = (
   request: Parse.Cloud.AfterDeleteRequest<T>,
-  Parse: Parse,
+  Parse: ParseType,
   config?: C
 ) => Promise<any>;
