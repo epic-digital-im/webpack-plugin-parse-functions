@@ -7,6 +7,7 @@ type PP = typeof P;
 export const payloadSchema: TriggerPayloadSchema = {
   something: {
     type: 'String',
+    label: 'Something',
     defaultValue: 'something',
     required: true,
   }

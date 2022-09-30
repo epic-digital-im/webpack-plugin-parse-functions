@@ -1,5 +1,5 @@
 import type P from 'parse';
-import { registerParseInstance } from './helpers';
+import { registerParseInstance, TriggerPayloadParams as TriggerHandlerParams } from './helpers';
 <% Object.entries(it.services).forEach(([serviceName, service]) => { %>
   import <%~ serviceName %><% if (service.config) { %>, { ServiceConfig as <%~ service.className %>ServiceConfig } <% } %> from './<%~ serviceName %>';
 <% }) %>
@@ -32,19 +32,6 @@ type ParseFunctionServiceSchemaField = {
 
 export type SchemaMap = {
   [prop in ClassNames]: ParseFunctionServiceSchema
-}
-
-type TriggerHandlerParamsOption = {
-  label: string;
-  value: string;
-}
-
-type TriggerHandlerParams = {
-  type: string;
-  targetClass?: string;
-  required?: boolean;
-  defaultValue?: any;
-  options?: TriggerHandlerParamsOption[];
 }
 
 export type TriggerHandlerOption = {
