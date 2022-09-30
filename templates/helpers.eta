@@ -225,8 +225,10 @@ type TriggerPayloadOption = {
   value: string;
 };
 
-type TriggerPayloadParams = {
+export type TriggerPayloadParams = {
   type: string;
+  label: string;
+  helpText?: string;
   targetClass?: string;
   required?: boolean;
   defaultValue?: any;
