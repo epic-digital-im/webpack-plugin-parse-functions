@@ -1,4 +1,5 @@
 import * as P from "parse";
+import crypto from 'crypto';
 
 type ParseType = typeof P;
 
@@ -9,6 +10,14 @@ export const registerParseInstance = (p: ParseType) => {
 };
 
 /* === HELPERS === */
+export const createHash = (obj: object): string => {
+  return crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex');
+};
+
+export const createStringHash = (str: string): string => {
+  return crypto.createHash('md5').update(str).digest('hex');
+};
+
 export async function processActionTriggers<C extends BaseServiceConfig>(
   registry: TriggerHandlerRegistry<C>,
   triggerType: string,
@@ -27,7 +36,22 @@ export async function processActionTriggers<C extends BaseServiceConfig>(
     const conditionMessage = await testTriggerCondition(trigger, object);
 
     if (conditionMessage != null) {
-      // console.warn('[ACTION TRIGGER]', conditionMessage);
+      // get action items associated with this trigger (if available),
+      // and resolve them when the trigger condition no longer matches.
+      const actionItemQuery = new Parse.Query('ActionItem')
+        .equalTo('trigger', trigger.id)
+        .equalTo('subjectClass', object.className)
+        .equalTo('subjectId', object.id);
+      try {
+        const actionItems = await actionItemQuery.find({ useMasterKey: true });
+        for (const actionItem of actionItems) {
+          actionItem.set('resolved', true);
+          actionItem.set('resolvedAt', new Date());
+          await actionItem.save();
+        }
+      } catch (err) {
+        // nothing
+      }
       continue;
     }
 
@@ -106,7 +130,9 @@ export async function testTriggerCondition<T extends Parse.Object = Parse.Object
       return propertyValue?.indexOf(value) === 0 ? undefined : message;
     case ActionTriggerCondition.EndsWith:
       const endsWith =
-        propertyValue && value ? propertyValue.indexOf(value) === propertyValue.length - value.toString().length : false;
+        propertyValue && value
+          ? propertyValue.indexOf(value) === propertyValue.length - value.toString().length
+          : false;
       return endsWith ? undefined : message;
     case ActionTriggerCondition.LessThan:
       const isLessThan = !isNaN(n1) && !isNaN(n2) ? n1 < n2 : false;
