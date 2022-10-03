@@ -39,7 +39,7 @@ export async function processActionTriggers<C extends BaseServiceConfig>(
       // get action items associated with this trigger (if available),
       // and resolve them when the trigger condition no longer matches.
       const actionItemQuery = new Parse.Query('ActionItem')
-        .equalTo('trigger', trigger.id)
+        .equalTo('trigger', trigger)
         .equalTo('subjectClass', object.className)
         .equalTo('subjectId', object.id);
       try {
@@ -47,7 +47,7 @@ export async function processActionTriggers<C extends BaseServiceConfig>(
         for (const actionItem of actionItems) {
           actionItem.set('resolved', true);
           actionItem.set('resolvedAt', new Date());
-          await actionItem.save();
+          await actionItem.save(null, { useMasterKey: true });
         }
       } catch (err) {
         // nothing
