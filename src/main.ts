@@ -221,6 +221,9 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
     
     const helpersFile = await this.makeHelpersFile(services);
     fs.writeFileSync(path.resolve(`${this.buildPath}`, 'helpers.ts'), helpersFile);
+    
+    const typesFile = await this.makeTypesFile(services);
+    fs.writeFileSync(path.resolve(`${this.buildPath}`, 'types.ts'), typesFile);
 
     Object.entries(services).forEach(async ([serviceName, service]) => {
       const servicePath = path.resolve(this.buildPath!, `${serviceName}.ts`);
@@ -241,6 +244,15 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
       { services, helpers: this.templateHelpers }
     ) as string;
     const f = prettier.format(helpersFileString, { parser: 'typescript', printWidth: 112 });
+    return f;
+  }
+  
+  private async makeTypesFile(services: ParseServiceMap): Promise<string> {
+    const typesFileString = await eta.renderFile(
+      'types.eta',
+      { services, helpers: this.templateHelpers }
+    ) as string;
+    const f = prettier.format(typesFileString, { parser: 'typescript', printWidth: 112 });
     return f;
   }
 

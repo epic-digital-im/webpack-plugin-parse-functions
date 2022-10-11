@@ -1,4 +1,5 @@
-import initialize, { Schemas } from '@@functions';
+import initialize from '@@functions';
+import { Schemas } from '@@functions/types';
 import { ActionItem } from '@@functions/actions';
 // import Parse from 'parse';
 

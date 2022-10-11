@@ -1,0 +1,74 @@
+import { TriggerPayloadParams as TriggerHandlerParams } from './helpers';
+
+/* === TYPES === */
+const configs = {
+  <% Object.entries(it.services).forEach(([serviceName, service]) => { %>
+    <% if (service.config == null) { return; } %>
+    <%~ serviceName %>?: require('<%~ service.config %>')?.default || {},
+  <% }) %>
+};
+
+export interface ParseFunctionConfig {
+  <% Object.entries(it.services).forEach(([serviceName, service]) => { %>
+    <%~ serviceName %>?: typeof configs['<%~ serviceName %>'];
+  <% }) %>
+}
+
+interface ParseFunctionServiceSchema {
+  className: string;
+  fields: {
+    [key: string]: ParseFunctionServiceSchemaField;
+  };
+  [key: string]: any;
+}
+
+type ParseFunctionServiceSchemaField = {
+  type: string;
+  targetClass?: string;
+  required?: boolean;
+  defaultValue?: any;
+}
+
+export type SchemaMap = {
+  [prop in ClassNames]: ParseFunctionServiceSchema
+}
+
+export type TriggerHandlerOption = {
+  label: string;
+  value: string;
+  parameters: { [key: string]: TriggerHandlerParams };
+}
+
+export type TriggerHandlersMap = {
+  [prop in ClassNames]: TriggerHandlerOption[];
+}
+
+
+/* === CONSTANTS === */
+export const Schemas: SchemaMap = {
+  <% Object.values(it.services).forEach(service => { %>
+    <%~ service.className %>: <%~ JSON.stringify(service.schema, null, 2) %>,
+  <% }) %>
+};
+
+export enum ClassNames {
+  <% Object.values(it.services).map(service => service.className).forEach(className => { %>
+    <%~ className %> = '<%~ className %>',
+  <% }) %>
+}
+
+export const ClassNamesList = Object.values(ClassNames);
+
+export const TriggerHandlers: TriggerHandlersMap = {
+  <% Object.values(it.services).forEach(service => { %>
+    <%~ service.className %>: [
+      <% service.triggers.forEach((trigger) => { %>
+        {
+          label: '<%~ it.helpers.getSanitizedFunctionName(trigger) %>',
+          value: '<%~ it.helpers.getSanitizedFunctionName(trigger) %>',
+          parameters: require('<%~ trigger %>')?.payloadSchema || {},
+        },
+      <% }) %>
+    ],
+  <% }) %>
+};

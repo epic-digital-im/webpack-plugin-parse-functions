@@ -1,4 +1,4 @@
-import { ClassNames } from '@@functions';
+import { ClassNames } from '@@functions/types';
 import { ServiceConfig } from '@@functions/actions';
 import P from 'parse';
 

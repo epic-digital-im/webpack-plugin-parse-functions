@@ -1,78 +1,12 @@
 import type P from 'parse';
 import { registerParseInstance, TriggerPayloadParams as TriggerHandlerParams } from './helpers';
+import { ParseFunctionConfig, SchemaMap, TriggerHandlersMap } from './types';
 <% Object.entries(it.services).forEach(([serviceName, service]) => { %>
   import <%~ serviceName %><% if (service.config) { %>, { ServiceConfig as <%~ service.className %>ServiceConfig } <% } %> from './<%~ serviceName %>';
 <% }) %>
 
 
 type ParseType = typeof P;
-
-/* === TYPES === */
-interface ParseFunctionConfig {
-  <% Object.entries(it.services).forEach(([serviceName, service]) => { %>
-    <% if (service.config == null) { return; } %>
-    <%~ serviceName %>?: <%~ service.className %>ServiceConfig;
-  <% }) %>
-}
-
-interface ParseFunctionServiceSchema {
-  className: string;
-  fields: {
-    [key: string]: ParseFunctionServiceSchemaField;
-  };
-  [key: string]: any;
-}
-
-type ParseFunctionServiceSchemaField = {
-  type: string;
-  targetClass?: string;
-  required?: boolean;
-  defaultValue?: any;
-}
-
-export type SchemaMap = {
-  [prop in ClassNames]: ParseFunctionServiceSchema
-}
-
-export type TriggerHandlerOption = {
-  label: string;
-  value: string;
-  parameters: { [key: string]: TriggerHandlerParams };
-}
-
-export type TriggerHandlersMap = {
-  [prop in ClassNames]: TriggerHandlerOption[];
-}
-
-
-/* === CONSTANTS === */
-export const Schemas: SchemaMap = {
-  <% Object.values(it.services).forEach(service => { %>
-    <%~ service.className %>: <%~ JSON.stringify(service.schema, null, 2) %>,
-  <% }) %>
-};
-
-export enum ClassNames {
-  <% Object.values(it.services).map(service => service.className).forEach(className => { %>
-    <%~ className %> = '<%~ className %>',
-  <% }) %>
-}
-
-export const ClassNamesList = Object.values(ClassNames);
-
-export const TriggerHandlers: TriggerHandlersMap = {
-  <% Object.values(it.services).forEach(service => { %>
-    <%~ service.className %>: [
-      <% service.triggers.forEach((trigger) => { %>
-        {
-          label: '<%~ it.helpers.getSanitizedFunctionName(trigger) %>',
-          value: '<%~ it.helpers.getSanitizedFunctionName(trigger) %>',
-          parameters: require('<%~ trigger %>')?.payloadSchema || {},
-        },
-      <% }) %>
-    ],
-  <% }) %>
-};
 
 
 /* === INITIALIZER === */
