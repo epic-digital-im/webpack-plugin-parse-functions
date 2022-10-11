@@ -145,6 +145,7 @@ export type AfterDeleteHandler<T extends Parse.Object, C extends BaseServiceConf
 /* === CONFIG TYPES === */
 export interface ParseFunctionConfig {
   <% Object.entries(it.services).forEach(([serviceName, service]) => { %>
+    <% if (!service.config) { return; } %>
     <%~ serviceName %>?: Partial<typeof <%~ it.helpers.getSanitizedFunctionName(service.config, `${serviceName}_`) %>>;
   <% }) %>
 }
