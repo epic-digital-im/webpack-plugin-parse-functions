@@ -1,7 +1,8 @@
 
 // auto-generated file for actions
 import P from 'parse';
-import { ActionTrigger, processActionTriggers, ServiceInitializer, TriggerCloudRequestHandler, TriggerHandlerRegistry } from './helpers';
+import { processActionTriggers } from './helpers';
+import { ActionTrigger, ServiceInitializer, TriggerCloudRequestHandler, TriggerHandlerRegistry } from './types';
 <% if (it.service.config) { %>
   import defaultServiceConfig from '<%~ it.service.config.replace(/\.ts$/, '') %>';
   import type { ServiceConfig } from '<%~ it.service.config.replace(/\.ts$/, '') %>';

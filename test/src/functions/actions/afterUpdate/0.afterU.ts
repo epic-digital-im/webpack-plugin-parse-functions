@@ -1,4 +1,4 @@
-import { AfterUpdateHandler } from '@@functions/helpers';
+import { AfterUpdateHandler } from '@@functions/types';
 import { ServiceConfig, ActionItem } from '@@functions/actions';
 import P from 'parse';
 

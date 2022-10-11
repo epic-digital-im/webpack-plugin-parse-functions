@@ -1,8 +1,8 @@
 import type P from 'parse';
-import { registerParseInstance, TriggerPayloadParams as TriggerHandlerParams } from './helpers';
-import { ParseFunctionConfig, SchemaMap, TriggerHandlersMap } from './types';
+import { registerParseInstance } from './helpers';
+import { ParseFunctionConfig } from './types';
 <% Object.entries(it.services).forEach(([serviceName, service]) => { %>
-  import <%~ serviceName %><% if (service.config) { %>, { ServiceConfig as <%~ service.className %>ServiceConfig } <% } %> from './<%~ serviceName %>';
+  import <%~ serviceName %> from './<%~ serviceName %>';
 <% }) %>
 
 

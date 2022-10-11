@@ -1,5 +1,5 @@
 // import { ClassNames } from '@@functions';
-import { BeforeSaveHandler } from '@@functions/helpers';
+import { BeforeSaveHandler } from '@@functions/types';
 import { ActionItem, ServiceConfig } from '@@functions/actions';
 import P from 'parse';
 

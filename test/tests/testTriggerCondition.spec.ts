@@ -1,10 +1,12 @@
 import * as Parse from 'parse';
 import {
   testTriggerCondition,
+} from '@@functions/helpers';
+import {
   ActionTriggerCondition,
   ActionTriggerAttributes,
   ActionTrigger,
-} from '@@functions/helpers';
+} from '@@functions/types';
 
 type SuccessObject = {
   exists?: string;

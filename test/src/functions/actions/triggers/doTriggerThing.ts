@@ -1,4 +1,4 @@
-import { TriggerHandler, TriggerPayloadSchema, ActionTrigger } from '@@functions/helpers';
+import { TriggerHandler, TriggerPayloadSchema, ActionTrigger } from '@@functions/types';
 import { ServiceConfig, ActionItem } from '@@functions/actions';
 import P from 'parse';
 

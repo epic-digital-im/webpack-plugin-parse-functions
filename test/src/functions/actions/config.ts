@@ -1,4 +1,4 @@
-import { BaseServiceConfig } from '@@functions/helpers';
+import { BaseServiceConfig } from '@@functions/types';
 
 export interface ServiceConfig extends BaseServiceConfig {
 
