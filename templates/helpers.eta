@@ -72,7 +72,7 @@ export async function processActionTriggers<C extends BaseServiceConfig>(
     try {
       await handler(request, trigger, Parse, config);
     } catch(err) {
-      console.warn('trigger error', err.message);
+      console.warn("trigger error", (err as any).message);
     }
   }
 }
