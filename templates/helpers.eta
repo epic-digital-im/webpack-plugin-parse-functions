@@ -69,7 +69,11 @@ export async function processActionTriggers<C extends BaseServiceConfig>(
     const handler = registry[handlerName];
     if (handler == null) continue;
 
-    await handler(request, trigger, Parse, config);
+    try {
+      await handler(request, trigger, Parse, config);
+    } catch(err) {
+      console.warn('trigger error', err.message);
+    }
   }
 }
 
