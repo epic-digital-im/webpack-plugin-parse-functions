@@ -8,3 +8,5 @@ const someFunction = (request: any, Parse: PP, config?: ServiceConfig) => {
 };
 
 export default someFunction;
+
+export const config = {};

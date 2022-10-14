@@ -1,9 +1,12 @@
 {
   "compilerOptions": {
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "noImplicitAny": true,
-    "module": "es6",
-    "target": "es5",
+    "moduleResolution": "node",
+    "module": "esnext",
+    "target": "es6",
+    "declaration": true,
     "allowJs": true,
     "types": [
       "@types/jest"
@@ -11,8 +14,14 @@
     "paths": {
       "@@functions": ["./src/functions/.build/index.ts"],
       "@@functions/*": ["./src/functions/.build/*"]
-    }
+    },
+    "outDir": "./dist",
+    "declarationDir": "./dist"
   },
   "files": ["src/index.ts"],
-  "include": ["tests"]
+  "include": ["tests"],
+  "exclude": ["dist"],
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
 }

@@ -88,17 +88,17 @@ const config = {
 ```js
 {
   functionDirectory: 'src/functions', // the directory to watch & build Parse functions
-  moduleAlias: '@@functions', // the alias name used for importing the built files
+  moduleAlias: '@functions', // the alias name used for importing the built files
                               // from, e.g. `import initialize, { ClassNames } from '@@functions';`
 }
 ```
 The default option should be preferred, but there may be times where the project requires that you diverge from these naming conventions.
 
 ### On Build
-When the plugin runs, it will aggregate the files (according to the file structure above) and transpile them into modules in a `.build` folder that may then be accessed by importing members from the `moduleAlias` (default `@@functions`);
+When the plugin runs, it will aggregate the files (according to the file structure above) and transpile them into modules in a `.build` folder that may then be accessed by importing members from the `moduleAlias` (default `@functions`);
 
 ### Built Exports
-After building, the built modules can be accessed using the module alias (default: `@@functions`), and will export the following.
+After building, the built modules can be accessed using the module alias (default: `@functions`), and will export the following.
 
 #### Constants
 ```typescript

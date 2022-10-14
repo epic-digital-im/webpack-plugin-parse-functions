@@ -1,4 +1,4 @@
-import { ClassNamesList } from "@@functions";
+import { ClassNamesList } from "@functions";
 
 
 interface RestSchemaMap {

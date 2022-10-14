@@ -23,7 +23,7 @@ import { ActionTrigger, ServiceInitializer, TriggerCloudRequestHandler, TriggerH
 <% }) %>
 
 <% it.service.functions.forEach((functionPath) => { %>
-  <%~ it.helpers.createImportFromFilename(functionPath) %>
+  import <%~ it.helpers.getSanitizedFunctionName(functionPath) %>, { config as <%~ it.helpers.getSanitizedFunctionName(functionPath, 'config_') %> } from '<%~ it.helpers.removeExtension(functionPath) %>';
 <% }) %>
 
 <% it.service.jobs.forEach((jobPath) => { %>
@@ -74,81 +74,71 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
   // HOOKS
   <% Object.entries(it.helpers.SubhooksMap).forEach(([hookName, subhooks]) => { %>
     <% const hooks = it.service.hooks[hookName] %>
-    <% if (hooks && hooks.hooks.length > 0) { %>
-      Parse.Cloud.<%~ hookName %><<%~ it.service.className %>>('<%~ it.service.className %>', async (request) => {
+    Parse.Cloud.<%~ hookName %><<%~ it.service.className %>>('<%~ it.service.className %>', async (request) => {
+      <% if (hooks && hooks.hooks.length > 0) { %>
         <% hooks.hooks.forEach((hookPath) => { %>
           await <%~ it.helpers.getSanitizedFunctionName(hookPath, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
         <% }) %>
+      <% } %>
+      
+      <% for (const subhookName of subhooks) { %>
+        <% const subhook = it.service.hooks[subhookName] %>
+        await <%~ it.service.className %>_<%~ subhookName %>(request, configWithDefaults);
+      <% } %>
 
-        <% for (const subhookName of subhooks) { %>
-          <% const subhook = it.service.hooks[subhookName] %>
-          <% if (subhook && subhook.hooks.length) { %>
-            await <%~ it.service.className %>_<%~ subhookName %>(request, configWithDefaults);
-          <% } %>
-        <% } %>
-
-        await processActionTriggers(TriggerHandlers, '<%~ hookName %>', request, Parse, configWithDefaults);
-      }<% if (hooks.config) { %>, <%~ it.helpers.getSanitizedFunctionName(hooks.config, `hook_${hookName}_`) %><% } %>);
-    <% } %>
+      await processActionTriggers(TriggerHandlers, '<%~ hookName %>', request, Parse, configWithDefaults);
+    }<% if (hooks.config) { %>, <%~ it.helpers.getSanitizedFunctionName(hooks.config, `hook_${hookName}_`) %><% } %>);
     
   <% }) %>
 
   // ADDITIONAL HOOKS
-  <% if (it.service.hooks[it.helpers.AdditionalHookNames.beforeCreate].hooks.length) { %>
-    <% const hookName = it.helpers.AdditionalHookNames.beforeCreate; %>
-    <% const hook = it.service.hooks[it.helpers.AdditionalHookNames.beforeCreate]; %>
-    const <%~ it.service.className %>_<%~ hookName %> = async (request: Parse.Cloud.BeforeSaveRequest<<%~ it.service.className %>>, config: ServiceConfig) => {
-      const object = request.object;
-      if (!object.isNew()) return;
-      <% if (hook && hook.hooks.length > 0) { %>
-        <% for (h of hook.hooks) { %>
-          await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
-        <% } %>
+  <% let hookName = it.helpers.AdditionalHookNames.beforeCreate; %>
+  <% let hook = it.service.hooks[it.helpers.AdditionalHookNames.beforeCreate]; %>
+  const <%~ it.service.className %>_<%~ hookName %> = async (request: Parse.Cloud.BeforeSaveRequest<<%~ it.service.className %>>, config: ServiceConfig) => {
+    const object = request.object;
+    if (!object.isNew()) return;
+    <% if (hook && hook.hooks.length > 0) { %>
+      <% for (h of hook.hooks) { %>
+        await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
       <% } %>
-    };
-  <% } %>
+    <% } %>
+  };
   
-  <% if (it.service.hooks[it.helpers.AdditionalHookNames.afterCreate].hooks.length) { %>
-    <% const hookName = it.helpers.AdditionalHookNames.afterCreate; %>
-    <% const hook = it.service.hooks[it.helpers.AdditionalHookNames.afterCreate]; %>
-    const <%~ it.service.className %>_<%~ hookName %> = async (request: Parse.Cloud.AfterSaveRequest<<%~ it.service.className %>>, config: ServiceConfig) => {
-      const object = request.object;
-      if (!object.isNew()) return;
-      <% if (hook && hook.hooks.length > 0) { %>
-        <% for (h of hook.hooks) { %>
-          await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, configWithDefaults, Parse);
-        <% } %>
+  <% hookName = it.helpers.AdditionalHookNames.afterCreate; %>
+  <% hook = it.service.hooks[it.helpers.AdditionalHookNames.afterCreate]; %>
+  const <%~ it.service.className %>_<%~ hookName %> = async (request: Parse.Cloud.AfterSaveRequest<<%~ it.service.className %>>, config: ServiceConfig) => {
+    const object = request.object;
+    if ((+object.updatedAt - +object.createdAt) > 600) return;
+    <% if (hook && hook.hooks.length > 0) { %>
+      <% for (h of hook.hooks) { %>
+        await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
       <% } %>
-    };
-  <% } %>
+    <% } %>
+  };
   
-  <% if (it.service.hooks[it.helpers.AdditionalHookNames.beforeUpdate].hooks.length) { %>
-    <% const hookName = it.helpers.AdditionalHookNames.beforeUpdate; %>
-    <% const hook = it.service.hooks[it.helpers.AdditionalHookNames.beforeUpdate]; %>
-    const <%~ it.service.className %>_<%~ hookName %> = async (request: Parse.Cloud.BeforeSaveRequest<<%~ it.service.className %>>, config: ServiceConfig) => {
-      const object = request.object;
-      if (object.isNew()) return;
-      <% if (hook && hook.hooks.length > 0) { %>
-        <% for (h of hook.hooks) { %>
-          await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
-        <% } %>
+  <% hookName = it.helpers.AdditionalHookNames.beforeUpdate; %>
+  <% hook = it.service.hooks[it.helpers.AdditionalHookNames.beforeUpdate]; %>
+  const <%~ it.service.className %>_<%~ hookName %> = async (request: Parse.Cloud.BeforeSaveRequest<<%~ it.service.className %>>, config: ServiceConfig) => {
+    const object = request.object;
+    if (object.isNew() || (+object.updatedAt - +object.createdAt) < 600) return;
+    <% if (hook && hook.hooks.length > 0) { %>
+      <% for (h of hook.hooks) { %>
+        await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
       <% } %>
-    };
-  <% } %>
+    <% } %>
+  };
   
-  <% if (it.service.hooks[it.helpers.AdditionalHookNames.afterUpdate].hooks.length) { %>
-    <% const hookName = it.helpers.AdditionalHookNames.afterUpdate; %>
-    <% const hook = it.service.hooks[it.helpers.AdditionalHookNames.afterUpdate]; %>
-    const <%~ it.service.className %>_<%~ hookName %> = async (request: Parse.Cloud.AfterSaveRequest<<%~ it.service.className %>>, config: ServiceConfig) => {
-      const object = request.object;
-      if (object.isNew()) return;
-      <% if (hook && hook.hooks.length > 0) { %>
-        <% for (h of hook.hooks) { %>
-          await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
-        <% } %>
+  <% hookName = it.helpers.AdditionalHookNames.afterUpdate; %>
+  <% hook = it.service.hooks[it.helpers.AdditionalHookNames.afterUpdate]; %>
+  const <%~ it.service.className %>_<%~ hookName %> = async (request: Parse.Cloud.AfterSaveRequest<<%~ it.service.className %>>, config: ServiceConfig) => {
+    const object = request.object;
+    if ((+object.updatedAt - +object.createdAt) < 600) return;
+    <% if (hook && hook.hooks.length > 0) { %>
+      <% for (h of hook.hooks) { %>
+        await <%~ it.helpers.getSanitizedFunctionName(h, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
       <% } %>
-    };
-  <% } %>
+    <% } %>
+  };
   
   // CRON HOOKS
   <% Object.values(it.helpers.CronHookNames).forEach((hookName) => { %>
@@ -174,7 +164,7 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
     Parse.Cloud.define(
       '<%~ it.helpers.getSanitizedFunctionName(functionPath) %>',
       (request) => <%~ it.helpers.getSanitizedFunctionName(functionPath) %>(request, Parse, configWithDefaults),
-      require('<%~ functionPath %>')?.config || defaultFunctionConfig
+      Object.assign({}, defaultFunctionConfig, <%~ it.helpers.getSanitizedFunctionName(functionPath, 'config_') %>)
     );
   <% }) %>
   

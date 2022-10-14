@@ -1,0 +1,48 @@
+{
+  "className": "Hook",
+  "fields": {
+    "objectId": {
+      "type": "String"
+    },
+    "createdAt": {
+      "type": "Date"
+    },
+    "updatedAt": {
+      "type": "Date"
+    },
+    "name": {
+      "type": "String"
+    },
+    "hooksRun": {
+      "type": "Array",
+      "defaultValue": []
+    }
+  },
+  "classLevelPermissions": {
+    "find": {
+      "*": true
+    },
+    "count": {
+      "*": true
+    },
+    "get": {
+      "*": true
+    },
+    "create": {
+      "*": true
+    },
+    "update": {
+      "*": true
+    },
+    "delete": {
+      "*": true
+    },
+    "addField": {},
+    "protectedFields": {}
+  },
+  "indexes": {
+    "_id_": {
+      "_id": 1
+    }
+  }
+}

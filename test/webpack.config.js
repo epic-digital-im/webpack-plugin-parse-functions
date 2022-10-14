@@ -6,6 +6,7 @@ const ParseFunctionsPlugin = require('../dist/main').default;
 const isProduction = process.env.NODE_ENV == 'production';
 
 const config = {
+  target: 'node',
   node: {
     global: true,
     __dirname: true,
@@ -14,6 +15,10 @@ const config = {
   entry: './src/index.ts',
   output: {
     path: path.resolve(__dirname, 'dist'),
+    filename: 'index.js',
+    module: true,
+    libraryTarget: 'module',
+    chunkFormat: 'module',
   },
   plugins: [
     // new NodePolyfillPlugin(),
@@ -40,6 +45,9 @@ const config = {
       crypto: require.resolve('crypto-js'),
       buffer: require.resolve('buffer'),
     },
+  },
+  experiments: {
+    outputModule: true,
   },
 };
 

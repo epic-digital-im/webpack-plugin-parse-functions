@@ -1,9 +1,9 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
-module.exports = {
+export default {
   preset: 'ts-jest',
   testEnvironment: 'node',
   moduleNameMapper: {
-    '@@functions$': '../src/functions/.build/index.ts',
-    '@@functions/(.*)$': '../src/functions/.build/$1.ts'
+    '@functions$': '<rootDir>/src/functions/.build/index.ts',
+    '@functions/(.*)$': '<rootDir>/src/functions/.build/$1.ts'
   }
 };

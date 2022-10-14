@@ -1,8 +1,13 @@
 import * as P from 'parse';
 <% Object.entries(it.services).forEach(([serviceName, service]) => { %>
+  <% service.triggers.forEach((trigger) => { %>
+    import { payloadSchema as <%~ it.helpers.getSanitizedFunctionName(trigger, 'trigger_payload_schema_') %> } from '<%~ it.helpers.removeExtension(trigger) %>';
+  <% }) %>
+  
   <% if (!service.config) { return; } %>
   <%~ it.helpers.createImportFromFilename(service.config, `${serviceName}_`) %>
 <% }) %>
+
 
 type ParseType = typeof P;
 
@@ -202,7 +207,7 @@ export const TriggerHandlers: TriggerHandlersMap = {
         {
           label: '<%~ it.helpers.getSanitizedFunctionName(trigger) %>',
           value: '<%~ it.helpers.getSanitizedFunctionName(trigger) %>',
-          parameters: require('<%~ trigger %>')?.payloadSchema || {},
+          parameters: <%~ it.helpers.getSanitizedFunctionName(trigger, 'trigger_payload_schema_') %>,
         },
       <% }) %>
     ],

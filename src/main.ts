@@ -39,12 +39,12 @@ enum CronHookNames {
 
 const SubhooksMap = {
   [NativeHookNames.beforeSave]: [
-    AdditionalBeforeSaveHookNames.beforeCreate,
     AdditionalBeforeSaveHookNames.beforeUpdate,
+    AdditionalBeforeSaveHookNames.beforeCreate,
   ],
   [NativeHookNames.afterSave]: [
-    AdditionalAfterSaveHookNames.afterCreate,
     AdditionalAfterSaveHookNames.afterUpdate,
+    AdditionalAfterSaveHookNames.afterCreate,
   ],
   [NativeHookNames.beforeDelete]: [],
   [NativeHookNames.afterDelete]: [],
@@ -133,7 +133,7 @@ interface ParseFunctionPluginOptions {
 /* === PLUGIN === */
 const DEFAULT_OPTIONS: ParseFunctionPluginOptions = {
   functionDirectory: 'src/functions',
-  moduleAlias: '@@functions',
+  moduleAlias: '@functions',
 }
 
 export class ParseFunctionsPlugin implements WebpackPluginInstance {
@@ -148,6 +148,7 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
       SubhooksMap,
       CronHookNames,
       AdditionalHookNames,
+      removeExtension,
       mapSchemaTypeToTSType,
       createImportFromFilename,
       getSanitizedFunctionName,
@@ -167,7 +168,7 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
     compiler.hooks.compilation.tap(this.constructor.name, this.startBuild);
 
     // Look for import of modules that begins with `@@function` and replace with build folder
-    new NormalModuleReplacementPlugin(/^@@functions(.*)/, (resource: any) => {
+    new NormalModuleReplacementPlugin(/^@functions(.*)/, (resource: any) => {
       resource.request = resource.request.replace(this.options.moduleAlias, this.buildPath);
     }).apply(compiler);
   }
@@ -277,6 +278,10 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
 
 
 /* === TEMPLATE HELPERS === */
+function removeExtension(filePath: string) {
+  return filePath.replace(/\.(t|j)s$/, '');
+}
+
 function createImportFromFilename(filePath: string, prefix: string = '') {
   return `import ${getSanitizedFunctionName(filePath, prefix)} from '${filePath.replace(/\.ts$/, '')}';`
 }
