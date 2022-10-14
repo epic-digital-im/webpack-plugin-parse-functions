@@ -72,24 +72,25 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
   const configWithDefaults = <% if (it.service.config) { %> Object.assign({}, defaultServiceConfig, config) <% } else { %> config <% } %>;
 
   // HOOKS
-  <% Object.entries(it.helpers.SubhooksMap).forEach(([hookName, subhooks]) => { %>
-    <% const hooks = it.service.hooks[hookName] %>
-    Parse.Cloud.<%~ hookName %><<%~ it.service.className %>>('<%~ it.service.className %>', async (request) => {
-      <% if (hooks && hooks.hooks.length > 0) { %>
-        <% hooks.hooks.forEach((hookPath) => { %>
-          await <%~ it.helpers.getSanitizedFunctionName(hookPath, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
-        <% }) %>
-      <% } %>
-      
-      <% for (const subhookName of subhooks) { %>
-        <% const subhook = it.service.hooks[subhookName] %>
-        await <%~ it.service.className %>_<%~ subhookName %>(request, configWithDefaults);
-      <% } %>
+  <% if (it.service.className !== '_Session') { %>
+    <% Object.entries(it.helpers.SubhooksMap).forEach(([hookName, subhooks]) => { %>
+      <% const hooks = it.service.hooks[hookName] %>
+      Parse.Cloud.<%~ hookName %><<%~ it.service.className %>>('<%~ it.service.className %>', async (request) => {
+        <% if (hooks && hooks.hooks.length > 0) { %>
+          <% hooks.hooks.forEach((hookPath) => { %>
+            await <%~ it.helpers.getSanitizedFunctionName(hookPath, `hook_${hookName}_`) %>(request, Parse, configWithDefaults);
+          <% }) %>
+        <% } %>
+        
+        <% for (const subhookName of subhooks) { %>
+          <% const subhook = it.service.hooks[subhookName] %>
+          await <%~ it.service.className %>_<%~ subhookName %>(request, configWithDefaults);
+        <% } %>
 
-      await processActionTriggers(TriggerHandlers, '<%~ hookName %>', request, Parse, configWithDefaults);
-    }<% if (hooks.config) { %>, <%~ it.helpers.getSanitizedFunctionName(hooks.config, `hook_${hookName}_`) %><% } %>);
-    
-  <% }) %>
+        await processActionTriggers(TriggerHandlers, '<%~ hookName %>', request, Parse, configWithDefaults);
+      }<% if (hooks.config) { %>, <%~ it.helpers.getSanitizedFunctionName(hooks.config, `hook_${hookName}_`) %><% } %>);
+    <% }) %>
+  <% } %>
 
   // ADDITIONAL HOOKS
   <% let hookName = it.helpers.AdditionalHookNames.beforeCreate; %>
