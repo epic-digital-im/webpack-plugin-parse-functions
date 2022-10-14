@@ -133,7 +133,7 @@ interface ParseFunctionPluginOptions {
 /* === PLUGIN === */
 const DEFAULT_OPTIONS: ParseFunctionPluginOptions = {
   functionDirectory: 'src/functions',
-  moduleAlias: '@functions',
+  moduleAlias: '@@functions',
 }
 
 export class ParseFunctionsPlugin implements WebpackPluginInstance {
@@ -168,7 +168,7 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
     compiler.hooks.compilation.tap(this.constructor.name, this.startBuild);
 
     // Look for import of modules that begins with `@@function` and replace with build folder
-    new NormalModuleReplacementPlugin(/^@functions(.*)/, (resource: any) => {
+    new NormalModuleReplacementPlugin(/^@@functions(.*)/, (resource: any) => {
       resource.request = resource.request.replace(this.options.moduleAlias, this.buildPath);
     }).apply(compiler);
   }
