@@ -110,6 +110,7 @@ interface ParseFunctionServiceSchema {
 interface ParseFunctionService {
   name: string;
   className: string;
+  basePath: string;
   schemaPath: string;
   schema: ParseFunctionServiceSchema;
   functions: string[];
@@ -164,7 +165,7 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
     this.schemaPaths = glob.sync(`${this.basePath}/**/schema.json`);
     this.buildPath = path.resolve(this.basePath, '.build');
     this.indexFilePath = path.resolve(this.buildPath, `index.ts`);
-    
+
     compiler.hooks.compilation.tap(this.constructor.name, this.startBuild);
 
     // Look for import of modules that begins with `@@function` and replace with build folder
@@ -189,7 +190,7 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
       const servicePath = path.join(this.basePath!, serviceDirName);
       const configPath = path.join(servicePath, 'config.ts');
       const schema: ParseFunctionServiceSchema = JSON.parse(fs.readFileSync(schemaPath, { encoding: 'utf-8' }));
-      const config = fs.existsSync(configPath) ? configPath : undefined;
+      const config = fs.existsSync(configPath) ? configPath.replace(this.basePath!, '..') : undefined;
       const triggers = glob.sync(`${servicePath}/triggers/*`);
       const functions = glob.sync(`${servicePath}/functions/**/*`);
       const jobs = glob.sync(`${servicePath}/jobs/**/*`);
@@ -205,9 +206,10 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
         };
         return hMemo;
       }, {} as Hooks);
-      
+
       memo[serviceDirName] = {
         name: serviceDirName,
+        basePath: this.basePath!,
         className: schema.className,
         schema,
         schemaPath,
@@ -219,10 +221,10 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
       };
       return memo;
     }, {} as ParseServiceMap);
-    
+
     const helpersFile = await this.makeHelpersFile(services);
     fs.writeFileSync(path.resolve(`${this.buildPath}`, 'helpers.ts'), helpersFile);
-    
+
     const typesFile = await this.makeTypesFile(services);
     fs.writeFileSync(path.resolve(`${this.buildPath}`, 'types.ts'), typesFile);
 
@@ -247,7 +249,7 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
     const f = prettier.format(helpersFileString, { parser: 'typescript', printWidth: 112 });
     return f;
   }
-  
+
   private async makeTypesFile(services: ParseServiceMap): Promise<string> {
     const typesFileString = await eta.renderFile(
       'types.eta',
@@ -262,6 +264,7 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
       'index.eta',
       { services, helpers: this.templateHelpers }
     ) as string;
+    console.log(services)
     const f = prettier.format(indexFileString, { parser: 'typescript', printWidth: 112 });
     return f;
   }
@@ -282,8 +285,8 @@ function removeExtension(filePath: string) {
   return filePath.replace(/\.(t|j)s$/, '');
 }
 
-function createImportFromFilename(filePath: string, prefix: string = '') {
-  return `import ${getSanitizedFunctionName(filePath, prefix)} from '${filePath.replace(/\.ts$/, '')}';`
+function createImportFromFilename(filePath: string, prefix: string = '', basePath: string = '') {
+  return `import ${getSanitizedFunctionName(filePath, prefix)} from '${filePath.replace(/\.ts$/, '').replace(basePath, '..')}';`
 }
 
 function getSanitizedFunctionName(filePath: string, prefix: string = ''): string {
@@ -295,10 +298,10 @@ function getSanitizedFunctionName(filePath: string, prefix: string = ''): string
 }
 
 function mapSchemaTypeToTSType(schemaField: ParseFunctionServiceSchemaField): string {
-  switch(schemaField.type) {
+  switch (schemaField.type) {
     case ParseServiceSchemaFieldType.Relation:
       return `Parse.Relation`
-      // return `Parse.Relation<${schemaField.targetClass}>`
+    // return `Parse.Relation<${schemaField.targetClass}>`
     case ParseServiceSchemaFieldType.Pointer:
       return `Parse.Pointer`
     case ParseServiceSchemaFieldType.String:
