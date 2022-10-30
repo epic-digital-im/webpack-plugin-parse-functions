@@ -264,7 +264,6 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
       'index.eta',
       { services, helpers: this.templateHelpers }
     ) as string;
-    console.log(services)
     const f = prettier.format(indexFileString, { parser: 'typescript', printWidth: 112 });
     return f;
   }
