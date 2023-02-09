@@ -10,24 +10,24 @@ import { ActionTrigger, ServiceInitializer, TriggerCloudRequestHandler, TriggerH
 
 <% Object.entries(it.service.hooks).forEach(([hookName, hooks]) => { %>
   <% if (hooks.config) { %>
-    <%~ it.helpers.createImportFromFilename(hooks.config, `hook_${hookName}_`) %>
+    <%~ it.helpers.createImportFromFilename(hooks.config, `hook_${hookName}_`, it.service.basePath) %>
   <% } %>
 
   <% hooks.hooks.forEach((hookPath) => { %>
-    <%~ it.helpers.createImportFromFilename(hookPath, `hook_${hookName}_`) %>
+    <%~ it.helpers.createImportFromFilename(hookPath, `hook_${hookName}_`, it.service.basePath) %>
   <% }) %>
 <% }) %>
 
 <% it.service.triggers.forEach((triggerPath) => { %>
-  <%~ it.helpers.createImportFromFilename(triggerPath, 'trigger_') %>
+  <%~ it.helpers.createImportFromFilename(triggerPath, 'trigger_', it.service.basePath) %>
 <% }) %>
 
 <% it.service.functions.forEach((functionPath) => { %>
-  import <%~ it.helpers.getSanitizedFunctionName(functionPath) %>, { config as <%~ it.helpers.getSanitizedFunctionName(functionPath, 'config_') %> } from '<%~ it.helpers.removeExtension(functionPath) %>';
+  import <%~ it.helpers.getSanitizedFunctionName(functionPath) %>, { config as <%~ it.helpers.getSanitizedFunctionName(functionPath, 'config_') %> } from '<%~ it.helpers.removeExtension(functionPath.replace(it.service.basePath, '..')) %>';
 <% }) %>
 
 <% it.service.jobs.forEach((jobPath) => { %>
-  <%~ it.helpers.createImportFromFilename(jobPath, 'job_') %>
+  <%~ it.helpers.createImportFromFilename(jobPath, 'job_', it.service.basePath) %>
 <% }) %>
 
 
@@ -49,19 +49,14 @@ export type <%~ it.service.className %> = P.Object<<%~ it.service.className %>At
 
 /* === CONSTANTS === */
 const defaultFunctionConfig = {
-  requireUser: true,
-  requireAnyUserRoles: ['editor'],
+  
 };
 
 const defaultJobConfig = {
-  requireUser: true,
-  requireAnyUserRoles: ['editor'],
-  requireMaster: true,
+  
 };
 
 const defaultTriggerConfig = {
-  requireUser: true,
-  requireAnyUserRoles: ['editor'],
   requireMaster: true,
 };
 

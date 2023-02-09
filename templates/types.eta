@@ -1,11 +1,11 @@
 import * as P from 'parse';
 <% Object.entries(it.services).forEach(([serviceName, service]) => { %>
   <% service.triggers.forEach((trigger) => { %>
-    import { payloadSchema as <%~ it.helpers.getSanitizedFunctionName(trigger, 'trigger_payload_schema_') %> } from '<%~ it.helpers.removeExtension(trigger) %>';
+    import { payloadSchema as <%~ it.helpers.getSanitizedFunctionName(trigger, 'trigger_payload_schema_') %> } from '<%~ it.helpers.removeExtension(trigger).replace(service.basePath, '..') %>';
   <% }) %>
   
   <% if (!service.config) { return; } %>
-  <%~ it.helpers.createImportFromFilename(service.config, `${serviceName}_`) %>
+  <%~ it.helpers.createImportFromFilename(service.config, `${serviceName}_`).replace('..', '') %>
 <% }) %>
 
 
