@@ -1,6 +1,6 @@
 {
   "name": "@epicdm/webpack-plugin-parse-functions",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "main": "dist/main.js",
   "description": "Webpack Parse Function builder",
   "author": "Dustin Chaffin, Epic Digital Interactive Media LLC",
@@ -12,7 +12,8 @@
   "scripts": {
     "dev": "tsc --watch",
     "build": "tsc",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
     "@types/glob": "^8.0.0",
