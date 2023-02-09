@@ -1,8 +1,14 @@
 {
-  "name": "webpack-plugin-parse-functions",
-  "private": true,
-  "version": "0.0.0",
+  "name": "@epicdm/webpack-plugin-parse-functions",
+  "version": "0.1.0",
   "main": "dist/main.js",
+  "description": "Webpack Parse Function builder",
+  "author": "Dustin Chaffin, Epic Digital Interactive Media LLC",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/epic-digital-im/webpack-plugin-parse-functions/issues"
+  },
+  "homepage": "https://github.com/epic-digital-im/webpack-plugin-parse-functions#readme",
   "scripts": {
     "dev": "tsc --watch",
     "build": "tsc",
