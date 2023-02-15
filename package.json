@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "eta": "^2.0.0",
-    "glob": "^8.0.3",
+    "glob": "^8.1.0",
     "parse": "^3.4.4",
     "prettier": "^2.7.1",
     "webpack-inject-plugin": "^1.5.5"
