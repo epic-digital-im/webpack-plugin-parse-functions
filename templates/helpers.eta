@@ -35,44 +35,48 @@ export async function processActionTriggers<C extends BaseServiceConfig>(
   Parse: ParseType,
   config?: C
 ) {
-  const { object } = request;
-  const actionTriggerQuery = new Parse.Query<ActionTrigger>("ActionTrigger")
-    .equalTo("active", true)
-    .equalTo("objectClass", object.className)
-    .equalTo("trigger", triggerType);
-  const triggers = await actionTriggerQuery.findAll({ useMasterKey: true });
+  // Do not process action triggers unless explicitly enabled
+  if (config?.processTriggers === true) {
+  
+    const { object } = request;
+    const actionTriggerQuery = new Parse.Query<ActionTrigger>("ActionTrigger")
+      .equalTo("active", true)
+      .equalTo("objectClass", object.className)
+      .equalTo("trigger", triggerType);
+    const triggers = await actionTriggerQuery.findAll({ useMasterKey: true });
 
-  for (const trigger of triggers) {
-    const conditionMessage = await testTriggerCondition(trigger, object);
+    for (const trigger of triggers) {
+      const conditionMessage = await testTriggerCondition(trigger, object);
 
-    if (conditionMessage != null) {
-      // get action items associated with this trigger (if available),
-      // and resolve them when the trigger condition no longer matches.
-      const actionItemQuery = new Parse.Query('ActionItem')
-        .equalTo('trigger', trigger)
-        .equalTo('subjectClass', object.className)
-        .equalTo('subjectId', object.id);
-      try {
-        const actionItems = await actionItemQuery.find({ useMasterKey: true });
-        for (const actionItem of actionItems) {
-          actionItem.set('resolved', true);
-          actionItem.set('resolvedAt', new Date());
-          await actionItem.save(null, { useMasterKey: true });
+      if (conditionMessage != null) {
+        // get action items associated with this trigger (if available),
+        // and resolve them when the trigger condition no longer matches.
+        const actionItemQuery = new Parse.Query('ActionItem')
+          .equalTo('trigger', trigger)
+          .equalTo('subjectClass', object.className)
+          .equalTo('subjectId', object.id);
+        try {
+          const actionItems = await actionItemQuery.find({ useMasterKey: true });
+          for (const actionItem of actionItems) {
+            actionItem.set('resolved', true);
+            actionItem.set('resolvedAt', new Date());
+            await actionItem.save(null, { useMasterKey: true });
+          }
+        } catch (err) {
+          // nothing
         }
-      } catch (err) {
-        // nothing
+        continue;
       }
-      continue;
-    }
 
-    const handlerName = trigger.get("handler");
-    const handler = registry[handlerName];
-    if (handler == null) continue;
+      const handlerName = trigger.get("handler");
+      const handler = registry[handlerName];
+      if (handler == null) continue;
 
-    try {
-      await handler(request, trigger, Parse, config);
-    } catch(err) {
-      console.warn("trigger error", (err as any).message);
+      try {
+        await handler(request, trigger, Parse, config);
+      } catch(err) {
+        console.warn("trigger error", (err as any).message);
+      }
     }
   }
 }
