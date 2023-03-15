@@ -60,6 +60,7 @@ const defaultTriggerConfig = {
   requireMaster: true,
 };
 
+export const config = <%~ it.service.json %>
 
 /* === SERVICE === */
 const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> <% } else { %> ServiceInitializer <% } %> =
@@ -163,7 +164,7 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
       Object.assign({}, defaultFunctionConfig, <%~ it.helpers.getSanitizedFunctionName(functionPath, 'config_') %>)
     );
   <% }) %>
-  
+
   // JOBS
   <% it.service.jobs.forEach((jobPath) => { %>
     Parse.Cloud.job(
@@ -179,5 +180,17 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
   <% }) %>
   };
 };
+
+export const functions = {
+  <% it.service.functions.forEach((functionPath) => { %>
+    '<%~ it.helpers.getSanitizedFunctionName(functionPath) %>': Object.assign({}, defaultFunctionConfig, <%~ it.helpers.getSanitizedFunctionName(functionPath, 'config_') %>),
+  <% }) %>
+}
+
+export const jobs = {
+  <% it.service.jobs.forEach((jobPath) => { %>
+    '<%~ it.helpers.getSanitizedFunctionName(jobPath) %>': {},
+  <% }) %>
+}
 
 export default service;

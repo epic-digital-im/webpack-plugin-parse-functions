@@ -119,6 +119,7 @@ interface ParseFunctionService {
   triggers: string[];
   jobs: string[];
   config?: string;
+  json?: string;
 }
 
 interface ParseServiceMap {
@@ -182,7 +183,7 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
       console.warn('[PARSE FUNCTIONS PLUGIN]', 'No build folder found; creating one now');
     }
 
-    fs.mkdirSync(this.buildPath!);
+    fs.mkdirSync(this.buildPath!); 
 
     const services = this.schemaPaths!.reduce((memo, schemaPath) => {
       const p = schemaPath.split(path.sep);
@@ -205,7 +206,7 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
           config: hookConfig,
         };
         return hMemo;
-      }, {} as Hooks);
+      }, {} as Hooks); 
 
       memo[serviceDirName] = {
         name: serviceDirName,
@@ -219,8 +220,9 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
         jobs,
         config,
       };
+      
       return memo;
-    }, {} as ParseServiceMap);
+    }, {} as ParseServiceMap); 
 
     const helpersFile = await this.makeHelpersFile(services);
     fs.writeFileSync(path.resolve(`${this.buildPath}`, 'helpers.ts'), helpersFile);
