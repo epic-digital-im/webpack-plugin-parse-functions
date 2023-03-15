@@ -119,6 +119,7 @@ interface ParseFunctionService {
   triggers: string[];
   jobs: string[];
   config?: string;
+  json?: string;
 }
 
 interface ParseServiceMap {
@@ -184,6 +185,9 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
 
     fs.mkdirSync(this.buildPath!);
 
+    const functionsMap = {};
+    const jobsMap = {};
+
     const services = this.schemaPaths!.reduce((memo, schemaPath) => {
       const p = schemaPath.split(path.sep);
       const serviceDirName = p[p.length - 2];
@@ -205,7 +209,7 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
           config: hookConfig,
         };
         return hMemo;
-      }, {} as Hooks);
+      }, {} as Hooks); 
 
       memo[serviceDirName] = {
         name: serviceDirName,
@@ -219,8 +223,9 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
         jobs,
         config,
       };
+      
       return memo;
-    }, {} as ParseServiceMap);
+    }, {} as ParseServiceMap); 
 
     const helpersFile = await this.makeHelpersFile(services);
     fs.writeFileSync(path.resolve(`${this.buildPath}`, 'helpers.ts'), helpersFile);
@@ -268,6 +273,15 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
     return f;
   }
 
+  // private async makeConfigFile(services: ParseServiceMap): Promise<string> {
+  //   const indexFileString = await eta.renderFile(
+  //     'config.eta',
+  //     { services, helpers: this.templateHelpers }
+  //   ) as string;
+  //   const f = prettier.format(indexFileString, { parser: 'typescript', printWidth: 112 });
+  //   return f;   
+  // }
+
   private async makeServiceFile(service: ParseFunctionService): Promise<string> {
     const serviceFileString = await eta.renderFile(
       'service.eta',
@@ -280,6 +294,10 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
 
 
 /* === TEMPLATE HELPERS === */
+function replaceAllInString(str: string, match: string, replace: string) {
+  return str.split(match).join(replace);
+}
+
 function removeExtension(filePath: string) {
   return filePath.replace(/\.(t|j)s$/, '');
 }
