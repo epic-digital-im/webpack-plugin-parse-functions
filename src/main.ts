@@ -183,10 +183,7 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
       console.warn('[PARSE FUNCTIONS PLUGIN]', 'No build folder found; creating one now');
     }
 
-    fs.mkdirSync(this.buildPath!);
-
-    const functionsMap = {};
-    const jobsMap = {};
+    fs.mkdirSync(this.buildPath!); 
 
     const services = this.schemaPaths!.reduce((memo, schemaPath) => {
       const p = schemaPath.split(path.sep);
@@ -273,15 +270,6 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
     return f;
   }
 
-  // private async makeConfigFile(services: ParseServiceMap): Promise<string> {
-  //   const indexFileString = await eta.renderFile(
-  //     'config.eta',
-  //     { services, helpers: this.templateHelpers }
-  //   ) as string;
-  //   const f = prettier.format(indexFileString, { parser: 'typescript', printWidth: 112 });
-  //   return f;   
-  // }
-
   private async makeServiceFile(service: ParseFunctionService): Promise<string> {
     const serviceFileString = await eta.renderFile(
       'service.eta',
@@ -294,10 +282,6 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
 
 
 /* === TEMPLATE HELPERS === */
-function replaceAllInString(str: string, match: string, replace: string) {
-  return str.split(match).join(replace);
-}
-
 function removeExtension(filePath: string) {
   return filePath.replace(/\.(t|j)s$/, '');
 }

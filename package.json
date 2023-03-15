@@ -20,14 +20,14 @@
     "@types/parse": "^2.18.18",
     "@types/prettier": "^2.7.0",
     "@types/webpack": "^5.28.0",
+    "husky": "^8.0.0",
     "typescript": "^4.6.4",
-    "webpack": "^5.74.0",
-    "husky": "^8.0.0"
+    "webpack": "^5.74.0"
   },
   "dependencies": {
     "eta": "^2.0.0",
     "glob": "^8.1.0",
-    "parse": "^3.4.4",
+    "parse": "^4.0.1",
     "prettier": "^2.8.3",
     "webpack-inject-plugin": "^1.5.5"
   }
