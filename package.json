@@ -1,6 +1,6 @@
 {
   "name": "@epicdm/webpack-plugin-parse-functions",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "main": "dist/main.js",
   "description": "Webpack Parse Function builder",
   "author": "Dustin Chaffin, Epic Digital Interactive Media LLC",
