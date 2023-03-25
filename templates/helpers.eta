@@ -11,6 +11,8 @@ import {
   TriggerValidationResult
 } from './types';
 
+import { detailedDiff } from 'deep-object-diff';
+
 type ParseType = typeof P;
 
 let Parse = P;
@@ -198,3 +200,89 @@ export async function validateTriggerPayload(
   }
   return errors;
 }
+
+export const CONFIG_DEFAULTS = {
+  classPrefix: '',
+  classPostfix: '_AUD',
+  fieldPrefix: '', // 'meta_',
+  fieldPostfix: '',
+  parseSDK: Parse,
+};
+
+const blacklist = ['ACL', 'createdAt', 'updatedAt', 'objectId', '_objCount'];
+
+function removeProp(obj, p) {
+  for (prop in obj) {
+    if (prop === p)
+      delete obj[prop];
+    else if (typeof obj[prop] === 'object')
+      removeProp(obj[prop], p);
+  }
+}
+
+const removePropFromObject = (obj: any, prop: string) => {
+  delete obj[prop];
+  return obj;
+}
+
+const iterateAcrossObject = (obj: any, fn: (obj: any, prop: string) => any) => {
+  for (const prop in obj) {
+    if (obj.hasOwnProperty(prop)) {
+      fn(obj, prop);
+    }
+  }
+  return obj;
+}
+
+export const audit = async (user: ParseType.User, action: string, subjectClass: string, req: any, config = CONFIG_DEFAULTS) => {
+  //`${config.classPrefix}${subjectClass}${config.classPostfix}`
+  const Audit = Parse.Object.extend("History");
+  const triggerName = req.triggerName;
+  const original = req.original;
+  const subject = req.object;
+  const isNew = triggerName === 'afterSave' && original === undefined;
+  const isDelete = triggerName === 'afterDelete';
+  const a = new Audit();
+
+  let prev = {};
+  let data = {};
+ 
+  for (const property in subject.attributes) {
+    if (Object.prototype.hasOwnProperty.call(subject.attributes, property)) {
+      if (blacklist.includes(property)) continue;
+      data[property] = subject.attributes[property];
+    }
+  }
+  if (original) {
+    for (const property in original.attributes) {
+      if (Object.prototype.hasOwnProperty.call(original.attributes, property)) {
+        if (blacklist.includes(property)) continue;
+        prev[property] = original.attributes[property];
+      }
+    }
+  }
+
+  const d = JSON.parse(JSON.stringify({ prev, data }, null, 2));
+
+  const delta = isDelete || isNew ? data : { ...detailedDiff(d.prev, d.data), prev };
+
+  a.set(`${config.fieldPrefix}actor${config.fieldPostfix}`, user);
+  a.set(`${config.fieldPrefix}action${config.fieldPostfix}`, isNew ? 'CREATE' : action);
+  a.set(`${config.fieldPrefix}class${config.fieldPostfix}`, subjectClass);
+  a.set(`${config.fieldPrefix}subject${config.fieldPostfix}`, subject.id);
+  a.set('delta', delta);
+
+  if (!isNew && action === 'UPDATE') {
+    const hasAdded = Object.keys(delta.added || {}).length > 0;
+    const hasDeleted = Object.keys(delta.deleted || {}).length > 0;
+    const hasUpdated = Object.keys(delta.updated || {}).length > 0;
+    if (hasAdded || hasDeleted || hasUpdated) {
+      a.save(null, { useMasterKey: true });
+    }
+  } else {
+    a.save(null, { useMasterKey: true });
+  }
+};
+
+export const auditAfterSave = (c: string) => async (req: any) => audit(req.user, 'UPDATE', c, req);
+export const auditAfterDelete = (c: string) => async (req: any) => audit(req.user, 'DELETE', c, req);

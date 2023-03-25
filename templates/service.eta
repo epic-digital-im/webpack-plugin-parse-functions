@@ -1,7 +1,7 @@
 
 // auto-generated file for actions
 import P from 'parse';
-import { processActionTriggers } from './helpers';
+import { processActionTriggers, auditAfterDelete, auditAfterSave } from './helpers';
 import { ActionTrigger, ServiceInitializer, TriggerCloudRequestHandler, TriggerHandlerRegistry } from './types';
 <% if (it.service.config) { %>
   import defaultServiceConfig from '<%~ it.service.config.replace(/\.ts$/, '') %>';
@@ -60,7 +60,7 @@ const defaultTriggerConfig = {
   requireMaster: true,
 };
 
-export const config = <%~ it.service.json %>
+export const config = <%~ it.service.json %> 
 
 /* === SERVICE === */
 const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> <% } else { %> ServiceInitializer <% } %> =
@@ -84,9 +84,15 @@ const service: <% if (it.service.config) { %> ServiceInitializer<ServiceConfig> 
         <% } %>
 
         await processActionTriggers(TriggerHandlers, '<%~ hookName %>', request, Parse, configWithDefaults);
+        <% if (it.service.className !== "History" && hookName === 'afterDelete') { %>  
+        if (config.audit) auditAfterDelete("<%~it.service.className%>")(request);
+        <% } %>
+        <% if (it.service.className !== "History" && hookName === 'afterSave') { %>  
+        if (config.audit) auditAfterSave("<%~it.service.className%>")(request);
+        <% } %>
       }<% if (hooks.config) { %>, <%~ it.helpers.getSanitizedFunctionName(hooks.config, `hook_${hookName}_`) %><% } %>);
     <% }) %>
-  <% } %>
+  <% } %> 
 
   // ADDITIONAL HOOKS
   <% let hookName = it.helpers.AdditionalHookNames.beforeCreate; %>
