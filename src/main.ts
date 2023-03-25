@@ -3,14 +3,12 @@ import prettier from 'prettier';
 import * as eta from 'eta';
 import glob from 'glob';
 import path from 'path';
-import fs from 'fs';
-
+import fs from 'fs'; 
 
 eta.configure({
   views: path.resolve(__dirname, '../templates'),
-});
-
-
+}); 
+ 
 /* === TYPES === */
 enum NativeHookNames {
   beforeSave = 'beforeSave',
@@ -23,10 +21,10 @@ enum AdditionalBeforeSaveHookNames {
   beforeCreate = 'beforeCreate',
   beforeUpdate = 'beforeUpdate',
 }
-
+  
 enum AdditionalAfterSaveHookNames {
   afterCreate = 'afterCreate',
-  afterUpdate = 'afterUpdate',
+  afterUpdate = 'afterUpdate',  
 }
 
 enum CronHookNames {
