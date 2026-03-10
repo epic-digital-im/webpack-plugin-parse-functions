@@ -190,11 +190,11 @@ export class ParseFunctionsPlugin implements WebpackPluginInstance {
       const configPath = path.join(servicePath, 'config.ts');
       const schema: ParseFunctionServiceSchema = JSON.parse(fs.readFileSync(schemaPath, { encoding: 'utf-8' }));
       const config = fs.existsSync(configPath) ? configPath.replace(this.basePath!, '..') : undefined;
-      const triggers = glob.sync(`${servicePath}/triggers/*`);
-      const functions = glob.sync(`${servicePath}/functions/**/*`);
-      const jobs = glob.sync(`${servicePath}/jobs/**/*`);
+      const triggers = glob.sync(`${servicePath}/triggers/*.{ts,js}`);
+      const functions = glob.sync(`${servicePath}/functions/**/*.{ts,js}`);
+      const jobs = glob.sync(`${servicePath}/jobs/**/*.{ts,js}`);
       const hooks: Hooks = Object.values(HookNames).reduce((hMemo, hookName) => {
-        const hookPaths = glob.sync(`${servicePath}/${hookName}/*`);
+        const hookPaths = glob.sync(`${servicePath}/${hookName}/*.{ts,js}`);
         const hookConfig = hookPaths.find((path) => /\/config\.t|js$/.test(path));
         if (hookConfig) {
           hookPaths.splice(hookPaths.indexOf(hookConfig), 1);
